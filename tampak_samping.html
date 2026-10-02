@@ -1,0 +1,320 @@
+<title>Peta Rak JDC Tampak Samping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: tool dengan header ringkas, tab tampilan, kontrol satu baris, lalu kanvas SVG yang bisa digulir. Gaya papan penanda gudang: baja, abu beton, oranye keselamatan sebagai aksen tunggal. */
+:root{
+  --bg:#eef0ee; --panel:#ffffff; --ink:#1b2127; --muted:#5b6670; --line:#d3d8d6;
+  --exist:#2d5f8a; --new:#a9b2b9; --accent:#d9731a; --accent-ink:#ffffff;
+  --l3:#cfe0ee; --l4:#b4cfe4; --l5:#98bad8; --l6:#6a9ac3; --l7:#2d5f8a; --l8:#214b70; --l9:#16364f;
+  --ok:#2a7d4f; --warn:#b3601a;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171b; --panel:#1a2026; --ink:#e7eaec; --muted:#93a0aa; --line:#2b343b;
+  --exist:#5b9bd0; --new:#66737e; --accent:#f08a2e; --accent-ink:#14100a;
+  --l3:#25405a; --l4:#2f5273; --l5:#3d6c97; --l6:#5088b8; --l7:#6ea6d6; --l8:#92c0e6; --l9:#bcdaf3;
+  --ok:#5fc08b; --warn:#e69a52; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#12171b; --panel:#1a2026; --ink:#e7eaec; --muted:#93a0aa; --line:#2b343b;
+  --exist:#5b9bd0; --new:#66737e; --accent:#f08a2e; --accent-ink:#14100a;
+  --l3:#25405a; --l4:#2f5273; --l5:#3d6c97; --l6:#5088b8; --l7:#6ea6d6; --l8:#92c0e6; --l9:#bcdaf3;
+  --ok:#5fc08b; --warn:#e69a52; color-scheme:dark;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+h1{margin:0;font-family:var(--f-display);font-weight:600;font-size:34px;letter-spacing:.01em;line-height:1;text-wrap:balance}
+.sub{color:var(--muted);margin-top:6px;max-width:62ch}
+.kpis{display:flex;flex-wrap:wrap;gap:8px 22px}
+.kpi{display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi b{font-family:var(--f-mono);font-weight:500;font-size:20px;font-variant-numeric:tabular-nums}
+.kpi span{font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:2px solid var(--line)}
+.tab{font:600 17px var(--f-display);letter-spacing:.04em;text-transform:uppercase;background:none;color:var(--muted);border:0;padding:8px 14px;margin-bottom:-2px;border-bottom:3px solid transparent;cursor:pointer}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.ctl{display:flex;align-items:center;gap:8px;min-width:0}
+.ctl label,.lbl{font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+select,input[type=range]{font:inherit;color:var(--ink)}
+select{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+input[type=range]{accent-color:var(--accent);width:min(320px,60vw)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{font:inherit;background:var(--bg);color:var(--muted);border:0;padding:5px 10px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.mini{font:inherit;font-size:12px;background:none;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:4px 8px;cursor:pointer}
+.mini:hover{border-color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;color:var(--muted);font-size:12.5px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}
+.legend i.nw{background:var(--new);border:1px dashed var(--ink)}
+.scroll{overflow-x:auto;min-width:0}
+.axis{display:flex;justify-content:space-between;font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lines{display:flex;flex-direction:column;gap:6px;min-width:max-content}
+.line{display:grid;grid-template-columns:92px auto;gap:10px;align-items:end}
+.line .nm{font-family:var(--f-display);font-weight:600;font-size:19px;line-height:1;white-space:nowrap}
+.line .nm small{display:block;font:400 11px var(--f-mono);color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+svg{display:block}
+[hidden]{display:none!important}
+svg text{fill:var(--muted);font-family:var(--f-mono)}
+.nw{stroke:var(--ink);stroke-width:.7;stroke-dasharray:2 1.5}
+.note{color:var(--muted);font-size:13px;max-width:80ch}
+.callout{border-left:3px solid var(--accent);padding:2px 0 2px 12px;color:var(--ink);font-size:13.5px;max-width:84ch}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:13px}
+th,td{text-align:right;padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-family:var(--f-display);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-size:12.5px}
+td.ok{color:var(--ok)} td.bad{color:var(--warn)}
+details summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+@media (max-width:560px){h1{font-size:28px}.line{grid-template-columns:70px auto}}
+@media (prefers-reduced-motion:no-preference){.tab{transition:color .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Peta Rak JDC · Tampak Samping</h1>
+      <div class="sub">Dibuat dari sheet “Rak Existing”. Setiap kotak adalah satu posisi pallet; tinggi tumpukan adalah jumlah level pada sel Excel.</div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </header>
+
+  <div class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-t="side" aria-selected="true">Tampak samping</button>
+    <button class="tab" role="tab" data-t="cross" aria-selected="false">Potongan melintang</button>
+    <button class="tab" role="tab" data-t="iso" aria-selected="false">3D isometrik</button>
+    <button class="tab" role="tab" data-t="recap" aria-selected="false">Rekap PP</button>
+  </div>
+
+  <section class="panel" id="p-side">
+    <div class="controls">
+      <div class="ctl"><label for="g-sel">Baris rak</label>
+        <select id="g-sel"></select></div>
+      <div class="ctl"><span class="lbl">Dilihat dari</span>
+        <span class="seg" id="s-side"><button data-v="W" aria-pressed="true">Barat</button><button data-v="E" aria-pressed="false">Timur</button></span></div>
+      <div class="ctl"><span class="lbl">Warna</span>
+        <span class="seg" id="s-col"><button data-v="status" aria-pressed="true">Status</button><button data-v="level" aria-pressed="false">Jumlah level</button></span></div>
+    </div>
+    <div class="legend" id="legend1"></div>
+    <div class="scroll"><div id="side-out"></div></div>
+    <div class="callout" id="side-note"></div>
+  </section>
+
+  <section class="panel" id="p-cross" hidden>
+    <div class="controls">
+      <div class="ctl"><label for="r-sl">Posisi utara–selatan</label>
+        <input type="range" id="r-sl" min="15" max="88" value="40"><b id="r-val" style="font-family:var(--f-mono);font-weight:500"></b></div>
+      <div class="ctl"><span class="seg" id="s-mode"><button data-v="cut" aria-pressed="true">Potongan di posisi ini</button><button data-v="sil" aria-pressed="false">Siluet tertinggi</button></span></div>
+      <div class="ctl"><span class="lbl">Dilihat dari</span>
+        <span class="seg" id="s-view"><button data-v="S" aria-pressed="true">Selatan</button><button data-v="N" aria-pressed="false">Utara</button></span></div>
+    </div>
+    <div class="controls">
+      <button class="mini" data-j="16">Ujung utara</button>
+      <button class="mini" data-j="40">Tengah</button>
+      <button class="mini" data-j="49">Lorong silang</button>
+      <button class="mini" data-j="86">Ujung selatan</button>
+    </div>
+    <div class="legend" id="legend2"></div>
+    <div class="scroll"><div id="cross-out"></div></div>
+    <div class="note">Dari sini terlihat profil tinggi gudang antar rak: perbedaan 6, 7 dan 9 level, lorong antar rak, dan area rendah di lorong silang.</div>
+  </section>
+
+  <section class="panel" id="p-iso" hidden>
+    <div class="controls">
+      <div class="ctl"><label for="i-rot">Sudut pandang</label>
+        <select id="i-rot"><option value="0">Dari barat laut</option><option value="1">Dari timur laut</option><option value="2">Dari tenggara</option><option value="3">Dari barat daya</option></select></div>
+      <div class="ctl"><label for="i-h">Tinggi level</label><input type="range" id="i-h" min="2" max="7" step="0.5" value="3.5"></div>
+      <div class="ctl"><span class="seg" id="s-col3"><button data-v="status" aria-pressed="true">Status</button><button data-v="level" aria-pressed="false">Jumlah level</button></span></div>
+    </div>
+    <div class="legend" id="legend3"></div>
+    <div class="scroll"><div id="iso-out"></div></div>
+    <div class="note">Tampilan 3D hanya memberi gambaran umum. Jarak antar kolom mengikuti kolom Excel, bukan ukuran asli rak, dan rak yang di belakang terhalang rak di depannya. Untuk membaca jumlah level per posisi, gunakan tab Tampak samping.</div>
+  </section>
+
+  <section class="panel" id="p-recap" hidden>
+    <div class="scroll"><table id="recap"></table></div>
+    <div class="note" id="recap-note"></div>
+  </section>
+</div>
+
+<script>
+const DATA=__DATA__;
+const $=s=>document.querySelector(s);
+const colName=n=>{let s='';while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
+const fmt=n=>n.toLocaleString('id-ID');
+const racks=DATA.racks.map(r=>{
+  const bays=new Map();
+  r.cells.forEach(([row,col,lv,nw])=>{
+    const b=bays.get(row)||{row,lv:0,pp:0,nw:0,n:0};
+    b.lv=Math.max(b.lv,lv);b.pp+=lv;b.nw=b.nw||nw;b.n++;bays.set(row,b);
+  });
+  const ex=r.cells.filter(c=>!c[3]).reduce((a,c)=>a+c[2],0);
+  const nw=r.cells.filter(c=>c[3]).reduce((a,c)=>a+c[2],0);
+  return {...r,bays,ex,nwpp:nw,maxLv:Math.max(...r.cells.map(c=>c[2])),cols:[...new Set(r.cells.map(c=>c[1]))].sort((a,b)=>a-b)};
+});
+const byCode=Object.fromEntries(racks.map(r=>[r.code,r]));
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+const EX=sum(racks,r=>r.ex), NW=sum(racks,r=>r.nwpp);
+$('#kpis').innerHTML=[['PP existing',fmt(EX)],['PP tambahan',fmt(NW)],['Total rencana',fmt(EX+NW)],['Rak',racks.length]]
+  .map(([l,v])=>`<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('');
+
+/* kelompok tampilan */
+const nums=[...Array(14)].map((_,i)=>String(i+1).padStart(2,'0'));
+const GROUPS={
+  AB:{label:'Row A + B (A01–A14, B01–B14)',lines:nums.map(n=>({label:`A${n} · B${n}`,parts:[byCode['A'+n],byCode['B'+n]].filter(Boolean)}))},
+  C:{label:'Row C (C01–C10)',lines:racks.filter(r=>r.grp==='C').map(r=>({label:r.code,parts:[r]}))},
+  D:{label:'Row D (D01–D09)',lines:racks.filter(r=>r.grp==='D').map(r=>({label:r.code,parts:[r]}))},
+  S:{label:'Samping (kolom CM, baru)',lines:racks.filter(r=>r.grp==='S').map(r=>({label:'Samping',parts:[r]}))}
+};
+$('#g-sel').innerHTML=Object.entries(GROUPS).map(([k,g])=>`<option value="${k}">${g.label}</option>`).join('');
+const state={tab:'side',g:'AB',side:'W',col:'status',row:40,mode:'cut',view:'S',rot:0,ih:3.5};
+
+const fillOf=(lv,mode)=>mode==='level'?`var(--l${Math.min(9,Math.max(3,lv))})`:'var(--exist)';
+const colourFor=(lv,nw,mode)=>nw&&mode==='status'?'var(--new)':fillOf(lv,mode);
+function legend(el,mode){
+  const lv=[3,5,6,7,9];
+  el.innerHTML=(mode==='level'
+    ?lv.map(l=>`<span><i style="background:var(--l${l})"></i>${l} level</span>`).join('')
+    :`<span><i style="background:var(--exist)"></i>Existing</span><span><i class="nw"></i>Racking baru (abu-abu di Excel)</span>`)
+    +(mode==='level'?`<span><i class="nw" style="background:none"></i>Garis putus-putus = racking baru</span>`:'');
+}
+
+/* ---------- Tab 1: tampak samping ---------- */
+function renderSide(){
+  const g=GROUPS[state.g], flip=state.side==='E';
+  const lines=g.lines.filter(l=>l.parts.length);
+  let r0=1e9,r1=0,mx=0;
+  lines.forEach(l=>l.parts.forEach(p=>{p.bays.forEach((b,row)=>{r0=Math.min(r0,row);r1=Math.max(r1,row)});mx=Math.max(mx,p.maxLv)}));
+  const cw=12,lh=8,W=(r1-r0+1)*cw,H=mx*lh;
+  const X=row=>(flip?(r1-row):(row-r0))*cw;
+  let ruler=`<svg width="${W}" height="18" viewBox="0 0 ${W} 18" role="img" aria-label="Skala posisi">`;
+  for(let row=r0;row<=r1;row++) if(row%5===0) ruler+=`<line x1="${X(row)+cw/2}" x2="${X(row)+cw/2}" y1="12" y2="18" stroke="var(--muted)"/><text x="${X(row)+cw/2}" y="9" font-size="9" text-anchor="middle">${row}</text>`;
+  ruler+='</svg>';
+  const body=lines.map(l=>{
+    let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tampak samping ${l.label}"><line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/>`;
+    const rows=new Map();
+    l.parts.forEach(p=>p.bays.forEach((b,row)=>rows.set(row,{...b,code:p.code})));
+    rows.forEach((b,row)=>{
+      const x=X(row);let rr='';
+      for(let k=1;k<=b.lv;k++) rr+=`<rect x="${x+.75}" y="${H-k*lh+.75}" width="${cw-1.5}" height="${lh-1.5}" rx="1" fill="${colourFor(b.lv,b.nw,state.col)}"${b.nw?' class="nw"':''}/>`;
+      s+=`<g><title>${b.code} · posisi ${row} · ${b.lv} level · ${b.pp} PP${b.n>1?' ('+b.n+' kolom)':''}${b.nw?' · racking baru':''}</title>${rr}</g>`;
+    });
+    s+='</svg>';
+    const ex=sum(l.parts,p=>p.ex),nw=sum(l.parts,p=>p.nwpp);
+    return `<div class="line"><div class="nm">${l.label}<small>${fmt(ex)} PP${nw?` +${fmt(nw)}`:''}</small></div>${s}</div>`;
+  }).join('');
+  const from=flip?['Selatan (S)','Utara (U)']:['Utara (U)','Selatan (S)'];
+  $('#side-out').innerHTML=`<div class="lines"><div class="line"><div class="axis" style="grid-column:1/-1;width:${W+102}px"><span>◀ ${from[0]}</span><span>${from[1]} ▶</span></div></div><div class="line"><div></div>${ruler}</div>${body}</div>`;
+  legend($('#legend1'),state.col);
+  const notes={
+    AB:'Rak Row A (utara) dan Row B (selatan) berada di kolom yang sama, dipisah lorong silang. Row B ditambah 4 posisi di ujung selatan (abu-abu).',
+    C:'Rak Row C punya 2 kolom per rak. Beberapa posisi hanya 3 level (posisi 44–50), kemungkinan area rendah di sekitar lorong silang. Abu-abu di ujung utara dan selatan = penambahan racking.',
+    D:'Rak Row D umumnya 6 level; beberapa posisi turun ke 3 level (posisi 47–52). Abu-abu = penambahan racking.',
+    S:'Deret baru di sisi timur (kolom CM), 6 level, seluruhnya racking baru.'
+  };
+  $('#side-note').textContent=notes[state.g]||'';
+}
+
+/* ---------- Tab 2: potongan melintang ---------- */
+const cellsByCol=new Map();
+racks.forEach(r=>r.cells.forEach(([row,col,lv,nw])=>{
+  if(!cellsByCol.has(col))cellsByCol.set(col,new Map());
+  cellsByCol.get(col).set(row,{row,lv,nw,code:r.code});
+}));
+const allCols=[...cellsByCol.keys()].sort((a,b)=>a-b);
+function renderCross(){
+  const c0=allCols[0],c1=allCols[allCols.length-1],cw=9.5,lh=15,mx=9,padL=34,padB=58;
+  const flip=state.view==='N';
+  const X=c=>padL+(flip?(c1-c):(c-c0))*cw;
+  const W=padL+(c1-c0+1)*cw+8,H=mx*lh+padB;
+  const pick=c=>{
+    const m=cellsByCol.get(c);if(!m)return null;
+    if(state.mode==='cut')return m.get(state.row)||null;
+    let best=null;m.forEach(b=>{if(!best||b.lv>best.lv)best=b});return best;
+  };
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Potongan melintang gudang">`;
+  for(let k=1;k<=mx;k++) s+=`<line x1="${padL}" x2="${W-4}" y1="${mx*lh-(k-1)*lh}" y2="${mx*lh-(k-1)*lh}" stroke="var(--line)" stroke-width=".5"/><text x="${padL-6}" y="${mx*lh-(k-1)*lh-lh/2+3}" font-size="9" text-anchor="end">L${k}</text>`;
+  s+=`<line x1="${padL}" x2="${W-4}" y1="${mx*lh}" y2="${mx*lh}" stroke="var(--ink)" stroke-width="1.2"/>`;
+  const labelled=new Map();
+  allCols.forEach(c=>{
+    const b=pick(c);if(!b)return;
+    let rr='';
+    for(let k=1;k<=b.lv;k++) rr+=`<rect x="${X(c)+.6}" y="${mx*lh-k*lh+.8}" width="${cw-1.2}" height="${lh-1.6}" rx="1" fill="${colourFor(b.lv,b.nw,state.col3||'status')}"${b.nw?' class="nw"':''}/>`;
+    s+=`<g><title>${b.code} · kolom ${colName(c)} · posisi ${b.row} · ${b.lv} level${b.nw?' · racking baru':''}</title>${rr}</g>`;
+    const key=b.code;const e=labelled.get(key)||{min:1e9,max:0};e.min=Math.min(e.min,X(c));e.max=Math.max(e.max,X(c)+cw);labelled.set(key,e);
+  });
+  labelled.forEach((e,code)=>{const cx=(e.min+e.max)/2;s+=`<text transform="translate(${cx+3},${mx*lh+8}) rotate(-90)" font-size="9" text-anchor="end">${code}</text>`});
+  s+='</svg>';
+  $('#cross-out').innerHTML=s;
+  $('#r-val').textContent=state.mode==='cut'?`posisi ${state.row}`:'semua posisi';
+  $('#r-sl').disabled=state.mode!=='cut';
+  legend($('#legend2'),'status');
+}
+
+/* ---------- Tab 3: isometrik ---------- */
+function renderIso(){
+  const cells=[];let rmin=1e9,rmax=0;
+  racks.forEach(r=>r.cells.forEach(([row,col,lv,nw])=>{cells.push({row,col,lv,nw});rmin=Math.min(rmin,row);rmax=Math.max(rmax,row)}));
+  const c0=allCols[0],c1=allCols[allCols.length-1];
+  const Wd=c1-c0+1,Hd=rmax-rmin+1,a=5.5,z=+state.ih;
+  const rot=+state.rot;
+  const tf=c=>{const cx=c.col-c0,ry=c.row-rmin;
+    return rot===0?[cx,ry]:rot===1?[ry,Wd-1-cx]:rot===2?[Wd-1-cx,Hd-1-ry]:[Hd-1-ry,cx]};
+  const items=cells.map(c=>{const [X,Y]=tf(c);return {...c,X,Y}}).sort((p,q)=>(p.X+p.Y)-(q.X+q.Y));
+  const P=(X,Y,h)=>[(X-Y)*a,(X+Y)*a/2-h*z];
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  const pt=(X,Y,h)=>{const p=P(X,Y,h);minx=Math.min(minx,p[0]);maxx=Math.max(maxx,p[0]);miny=Math.min(miny,p[1]);maxy=Math.max(maxy,p[1]);return p[0].toFixed(1)+','+p[1].toFixed(1)};
+  let out='';
+  items.forEach(c=>{
+    const {X,Y,lv}=c,base=colourFor(lv,c.nw,state.col3||'status');
+    const top=[pt(X,Y,lv),pt(X+1,Y,lv),pt(X+1,Y+1,lv),pt(X,Y+1,lv)].join(' ');
+    const left=[pt(X,Y+1,lv),pt(X+1,Y+1,lv),pt(X+1,Y+1,0),pt(X,Y+1,0)].join(' ');
+    const right=[pt(X+1,Y,lv),pt(X+1,Y+1,lv),pt(X+1,Y+1,0),pt(X+1,Y,0)].join(' ');
+    out+=`<polygon points="${left}" style="fill:color-mix(in srgb,${base} 72%,#000)"/><polygon points="${right}" style="fill:color-mix(in srgb,${base} 55%,#000)"/><polygon points="${top}" style="fill:${base}"/>`;
+  });
+  const pad=10,vb=`${(minx-pad).toFixed(0)} ${(miny-pad).toFixed(0)} ${(maxx-minx+2*pad).toFixed(0)} ${(maxy-miny+2*pad).toFixed(0)}`;
+  const w=Math.round(maxx-minx+2*pad),h=Math.round(maxy-miny+2*pad);
+  $('#iso-out').innerHTML=`<svg width="${w}" height="${h}" viewBox="${vb}" role="img" aria-label="Gambaran 3D isometrik gudang" style="margin-inline:auto">${out}</svg>`;
+  legend($('#legend3'),state.col3||'status');
+}
+
+/* ---------- Tab 4: rekap ---------- */
+function renderRecap(){
+  const rows=[...racks].sort((a,b)=>a.code.localeCompare(b.code)).map(r=>{
+    const x=DATA.pp[r.code];
+    const d=x==null?null:r.ex-x;
+    return `<tr><td>${r.code}</td><td>${r.maxLv}</td><td>${r.bays.size}</td><td>${fmt(r.ex)}</td><td>${r.nwpp?fmt(r.nwpp):'–'}</td><td>${x==null?'–':fmt(x)}</td><td class="${d==null?'':d===0?'ok':'bad'}">${d==null?'–':d===0?'cocok':(d>0?'+':'')+d}</td></tr>`;
+  }).join('');
+  $('#recap').innerHTML=`<thead><tr><th>Rak</th><th>Level maks</th><th>Posisi</th><th>PP existing (hitung)</th><th>PP baru</th><th>PP di Excel</th><th>Selisih</th></tr></thead><tbody>${rows}</tbody>`;
+  $('#recap-note').textContent='PP existing dihitung dari jumlah level seluruh sel non-abu-abu. Row A dan B cocok dengan tabel PP di sheet. Pada Row C selisihnya muncul karena tabel PP di sheet memakai cakupan baris yang berbeda dari sel berwarna abu-abu; mohon dicek. Row D belum punya angka PP di sheet.';
+}
+
+/* ---------- kontrol ---------- */
+function seg(id,key,after){
+  $(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    state[key]=b.dataset.v;$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));after()});
+}
+seg('#s-side','side',renderSide);seg('#s-col','col',renderSide);
+seg('#s-mode','mode',renderCross);seg('#s-view','view',renderCross);
+seg('#s-col3','col3',()=>{renderIso()});
+$('#g-sel').addEventListener('change',e=>{state.g=e.target.value;renderSide()});
+$('#r-sl').addEventListener('input',e=>{state.row=+e.target.value;renderCross()});
+document.querySelectorAll('[data-j]').forEach(b=>b.addEventListener('click',()=>{state.row=+b.dataset.j;state.mode='cut';
+  $('#r-sl').value=state.row;$('#s-mode').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v==='cut'));renderCross()}));
+$('#i-rot').addEventListener('change',e=>{state.rot=e.target.value;renderIso()});
+$('#i-h').addEventListener('input',e=>{state.ih=e.target.value;renderIso()});
+const done={};
+function show(t){
+  state.tab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  ['side','cross','iso','recap'].forEach(k=>$('#p-'+k).hidden=k!==t);
+  if(!done[t]){done[t]=1;({side:renderSide,cross:renderCross,iso:renderIso,recap:renderRecap})[t]()}
+}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)show(b.dataset.t)});
+const h=location.hash.slice(1);
+show(['side','cross','iso','recap'].includes(h)?h:'side');
+</script>
