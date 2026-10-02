@@ -6,7 +6,7 @@ Peta kapasitas rak gudang JDC dalam **tampak samping**, dibuat dengan Streamlit 
 
 - **Tampak samping**: satu strip per rak, tiap kotak satu posisi pallet, tinggi tumpukan = jumlah level. Bisa dilihat dari barat atau timur, diwarnai menurut status atau jumlah level.
 - **Potongan melintang**: profil tinggi antar rak, per posisi utara-selatan atau siluet tertinggi.
-- **3D isometrik**: gambaran umum (pelengkap).
+- **3D rak**: model rak seperti di gudang (tiang biru dengan penyilang, balok oranye per level, pelindung kuning, papan kode rak). Bisa diputar, diperbesar, dan dilihat setinggi mata dari lorong. Isi rak tidak digambar.
 - **Rekap PP**: PP existing, PP baru, dan pembanding dengan tabel PP di sheet.
 
 Kotak abu-abu di Excel dibaca sebagai racking baru.

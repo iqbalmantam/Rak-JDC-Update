@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Peta Rak JDC Tampak Samping</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -59,6 +64,10 @@ input[type=range]{accent-color:var(--accent);width:min(320px,60vw)}
 .line .nm{font-family:var(--f-display);font-weight:600;font-size:19px;line-height:1;white-space:nowrap}
 .line .nm small{display:block;font:400 11px var(--f-mono);color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
 svg{display:block}
+.cv3{position:relative;height:min(68vh,640px);min-height:380px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.cv3 canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#gl3{touch-action:none;cursor:grab}
+#ov3{pointer-events:none}
 [hidden]{display:none!important}
 svg text{fill:var(--muted);font-family:var(--f-mono)}
 .nw{stroke:var(--ink);stroke-width:.7;stroke-dasharray:2 1.5}
@@ -72,7 +81,11 @@ td.ok{color:var(--ok)} td.bad{color:var(--warn)}
 details summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:.04em;text-transform:uppercase}
 @media (max-width:560px){h1{font-size:28px}.line{grid-template-columns:70px auto}}
 @media (prefers-reduced-motion:no-preference){.tab{transition:color .15s}}
+body{margin:0}
+*{box-sizing:border-box}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
@@ -82,11 +95,18 @@ details summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font
     </div>
     <div class="kpis" id="kpis"></div>
   </header>
+  <div class="panel" id="drop">
+    <div class="controls">
+      <input type="file" id="f-in" accept=".xlsx" hidden>
+      <button class="mini" id="f-btn" style="font-size:13px;padding:6px 12px">Muat file Excel</button>
+      <span class="note" id="src">Data contoh: Rak_JDC.xlsx (sheet Rak Existing). Seret file .xlsx ke halaman ini untuk memakai data sendiri.</span>
+    </div>
+  </div>
 
   <div class="tabs" role="tablist" id="tabs">
     <button class="tab" role="tab" data-t="side" aria-selected="true">Tampak samping</button>
     <button class="tab" role="tab" data-t="cross" aria-selected="false">Potongan melintang</button>
-    <button class="tab" role="tab" data-t="iso" aria-selected="false">3D isometrik</button>
+    <button class="tab" role="tab" data-t="d3" aria-selected="false">3D rak</button>
     <button class="tab" role="tab" data-t="recap" aria-selected="false">Rekap PP</button>
   </div>
 
@@ -123,16 +143,19 @@ details summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font
     <div class="note">Dari sini terlihat profil tinggi gudang antar rak: perbedaan 6, 7 dan 9 level, lorong antar rak, dan area rendah di lorong silang.</div>
   </section>
 
-  <section class="panel" id="p-iso" hidden>
+  <section class="panel" id="p-d3" hidden>
     <div class="controls">
-      <div class="ctl"><label for="i-rot">Sudut pandang</label>
-        <select id="i-rot"><option value="0">Dari barat laut</option><option value="1">Dari timur laut</option><option value="2">Dari tenggara</option><option value="3">Dari barat daya</option></select></div>
-      <div class="ctl"><label for="i-h">Tinggi level</label><input type="range" id="i-h" min="2" max="7" step="0.5" value="3.5"></div>
-      <div class="ctl"><span class="seg" id="s-col3"><button data-v="status" aria-pressed="true">Status</button><button data-v="level" aria-pressed="false">Jumlah level</button></span></div>
+      <span class="seg" id="s-pre"><button data-p="ov">Gambaran umum</button><button data-p="top">Dari atas</button><button data-p="south">Dari selatan</button><button data-p="west">Dari barat</button></span>
+      <div class="ctl"><label for="f-rak">Setinggi mata</label><select id="f-rak"></select></div>
     </div>
-    <div class="legend" id="legend3"></div>
-    <div class="scroll"><div id="iso-out"></div></div>
-    <div class="note">Tampilan 3D hanya memberi gambaran umum. Jarak antar kolom mengikuti kolom Excel, bukan ukuran asli rak, dan rak yang di belakang terhalang rak di depannya. Untuk membaca jumlah level per posisi, gunakan tab Tampak samping.</div>
+    <div class="controls">
+      <div class="ctl"><label for="k-sl">Posisi pallet per bay</label><input type="range" id="k-sl" min="2" max="6" step="1" value="3"><b id="k-val" style="font-family:var(--f-mono);font-weight:500">3</b></div>
+      <div class="ctl"><label for="p-sl">Tinggi per level</label><input type="range" id="p-sl" min="1.4" max="2.2" step="0.1" value="1.7"><b id="p-val" style="font-family:var(--f-mono);font-weight:500">1,7 m</b></div>
+      <div class="ctl"><label for="o-sel">Tampilkan</label><select id="o-sel"><option value="all">Existing + baru</option><option value="ex">Existing saja</option></select></div>
+    </div>
+    <div class="legend"><span><i style="background:#1f5eb5"></i>Tiang existing</span><span><i style="background:#ee7819"></i>Balok existing</span><span><i style="background:#9ea8b3"></i>Racking baru (abu-abu)</span><span><i style="background:#f5c71a"></i>Pelindung tiang</span><span id="d3-info"></span></div>
+    <div class="cv3"><canvas id="gl3"></canvas><canvas id="ov3"></canvas><div id="gl-msg" class="note" hidden style="padding:16px">Browser ini tidak mendukung WebGL2, jadi tampilan 3D tidak bisa dibuka. Gunakan Chrome, Edge, Firefox, atau Safari terbaru.</div></div>
+    <div class="note">Putar: seret. Geser: seret sambil menahan Shift atau klik kanan. Perbesar: roda mouse atau dua jari. Papan kode rak muncul saat didekati. Ukuran adalah perkiraan: 1 posisi pallet 1,1 m, kedalaman rak 1,1 m, lorong 3 m. Isi rak tidak digambar. Tinggi tiap bay mengikuti jumlah level di Excel; lantai dasar dihitung sebagai level 1.</div>
   </section>
 
   <section class="panel" id="p-recap" hidden>
@@ -142,11 +165,14 @@ details summary{cursor:pointer;font-family:var(--f-display);font-weight:600;font
 </div>
 
 <script>
-const DATA=__DATA__;
+let DATA=__DATA__;
 const $=s=>document.querySelector(s);
 const colName=n=>{let s='';while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
 const fmt=n=>n.toLocaleString('id-ID');
-const racks=DATA.racks.map(r=>{
+let racks,byCode,EX,NW,GROUPS,cellsByCol,allCols;
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+function prepRacks(){
+racks=DATA.racks.map(r=>{
   const bays=new Map();
   r.cells.forEach(([row,col,lv,nw])=>{
     const b=bays.get(row)||{row,lv:0,pp:0,nw:0,n:0};
@@ -156,22 +182,26 @@ const racks=DATA.racks.map(r=>{
   const nw=r.cells.filter(c=>c[3]).reduce((a,c)=>a+c[2],0);
   return {...r,bays,ex,nwpp:nw,maxLv:Math.max(...r.cells.map(c=>c[2])),cols:[...new Set(r.cells.map(c=>c[1]))].sort((a,b)=>a-b)};
 });
-const byCode=Object.fromEntries(racks.map(r=>[r.code,r]));
-const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
-const EX=sum(racks,r=>r.ex), NW=sum(racks,r=>r.nwpp);
+byCode=Object.fromEntries(racks.map(r=>[r.code,r]));
+EX=sum(racks,r=>r.ex);NW=sum(racks,r=>r.nwpp);
 $('#kpis').innerHTML=[['PP existing',fmt(EX)],['PP tambahan',fmt(NW)],['Total rencana',fmt(EX+NW)],['Rak',racks.length]]
   .map(([l,v])=>`<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('');
+}
 
 /* kelompok tampilan */
 const nums=[...Array(14)].map((_,i)=>String(i+1).padStart(2,'0'));
-const GROUPS={
+function prepGroups(){
+GROUPS={
   AB:{label:'Row A + B (A01–A14, B01–B14)',lines:nums.map(n=>({label:`A${n} · B${n}`,parts:[byCode['A'+n],byCode['B'+n]].filter(Boolean)}))},
   C:{label:'Row C (C01–C10)',lines:racks.filter(r=>r.grp==='C').map(r=>({label:r.code,parts:[r]}))},
   D:{label:'Row D (D01–D09)',lines:racks.filter(r=>r.grp==='D').map(r=>({label:r.code,parts:[r]}))},
   S:{label:'Samping (kolom CM, baru)',lines:racks.filter(r=>r.grp==='S').map(r=>({label:'Samping',parts:[r]}))}
 };
 $('#g-sel').innerHTML=Object.entries(GROUPS).map(([k,g])=>`<option value="${k}">${g.label}</option>`).join('');
-const state={tab:'side',g:'AB',side:'W',col:'status',row:40,mode:'cut',view:'S',rot:0,ih:3.5};
+if(!GROUPS[state.g])state.g='AB';
+$('#g-sel').value=state.g;
+}
+const state={tab:'side',g:'AB',side:'W',col:'status',row:40,mode:'cut',view:'S',k:3,pitch:1.7,only:'all'};
 
 const fillOf=(lv,mode)=>mode==='level'?`var(--l${Math.min(9,Math.max(3,lv))})`:'var(--exist)';
 const colourFor=(lv,nw,mode)=>nw&&mode==='status'?'var(--new)':fillOf(lv,mode);
@@ -220,12 +250,16 @@ function renderSide(){
 }
 
 /* ---------- Tab 2: potongan melintang ---------- */
-const cellsByCol=new Map();
+function prepCols(){
+cellsByCol=new Map();
 racks.forEach(r=>r.cells.forEach(([row,col,lv,nw])=>{
   if(!cellsByCol.has(col))cellsByCol.set(col,new Map());
   cellsByCol.get(col).set(row,{row,lv,nw,code:r.code});
 }));
-const allCols=[...cellsByCol.keys()].sort((a,b)=>a-b);
+allCols=[...cellsByCol.keys()].sort((a,b)=>a-b);
+let r0=1e9,r1=0;racks.forEach(r=>r.cells.forEach(c=>{r0=Math.min(r0,c[0]);r1=Math.max(r1,c[0])}));
+const sl=$('#r-sl');sl.min=r0;sl.max=r1;state.row=Math.min(r1,Math.max(r0,state.row));sl.value=state.row;
+}
 function renderCross(){
   const c0=allCols[0],c1=allCols[allCols.length-1],cw=9.5,lh=15,mx=9,padL=34,padB=58;
   const flip=state.view==='N';
@@ -243,7 +277,7 @@ function renderCross(){
   allCols.forEach(c=>{
     const b=pick(c);if(!b)return;
     let rr='';
-    for(let k=1;k<=b.lv;k++) rr+=`<rect x="${X(c)+.6}" y="${mx*lh-k*lh+.8}" width="${cw-1.2}" height="${lh-1.6}" rx="1" fill="${colourFor(b.lv,b.nw,state.col3||'status')}"${b.nw?' class="nw"':''}/>`;
+    for(let k=1;k<=b.lv;k++) rr+=`<rect x="${X(c)+.6}" y="${mx*lh-k*lh+.8}" width="${cw-1.2}" height="${lh-1.6}" rx="1" fill="${colourFor(b.lv,b.nw,'status')}"${b.nw?' class="nw"':''}/>`;
     s+=`<g><title>${b.code} · kolom ${colName(c)} · posisi ${b.row} · ${b.lv} level${b.nw?' · racking baru':''}</title>${rr}</g>`;
     const key=b.code;const e=labelled.get(key)||{min:1e9,max:0};e.min=Math.min(e.min,X(c));e.max=Math.max(e.max,X(c)+cw);labelled.set(key,e);
   });
@@ -255,32 +289,179 @@ function renderCross(){
   legend($('#legend2'),'status');
 }
 
-/* ---------- Tab 3: isometrik ---------- */
-function renderIso(){
-  const cells=[];let rmin=1e9,rmax=0;
-  racks.forEach(r=>r.cells.forEach(([row,col,lv,nw])=>{cells.push({row,col,lv,nw});rmin=Math.min(rmin,row);rmax=Math.max(rmax,row)}));
-  const c0=allCols[0],c1=allCols[allCols.length-1];
-  const Wd=c1-c0+1,Hd=rmax-rmin+1,a=5.5,z=+state.ih;
-  const rot=+state.rot;
-  const tf=c=>{const cx=c.col-c0,ry=c.row-rmin;
-    return rot===0?[cx,ry]:rot===1?[ry,Wd-1-cx]:rot===2?[Wd-1-cx,Hd-1-ry]:[Hd-1-ry,cx]};
-  const items=cells.map(c=>{const [X,Y]=tf(c);return {...c,X,Y}}).sort((p,q)=>(p.X+p.Y)-(q.X+q.Y));
-  const P=(X,Y,h)=>[(X-Y)*a,(X+Y)*a/2-h*z];
-  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
-  const pt=(X,Y,h)=>{const p=P(X,Y,h);minx=Math.min(minx,p[0]);maxx=Math.max(maxx,p[0]);miny=Math.min(miny,p[1]);maxy=Math.max(maxy,p[1]);return p[0].toFixed(1)+','+p[1].toFixed(1)};
-  let out='';
-  items.forEach(c=>{
-    const {X,Y,lv}=c,base=colourFor(lv,c.nw,state.col3||'status');
-    const top=[pt(X,Y,lv),pt(X+1,Y,lv),pt(X+1,Y+1,lv),pt(X,Y+1,lv)].join(' ');
-    const left=[pt(X,Y+1,lv),pt(X+1,Y+1,lv),pt(X+1,Y+1,0),pt(X,Y+1,0)].join(' ');
-    const right=[pt(X+1,Y,lv),pt(X+1,Y+1,lv),pt(X+1,Y+1,0),pt(X+1,Y,0)].join(' ');
-    out+=`<polygon points="${left}" style="fill:color-mix(in srgb,${base} 72%,#000)"/><polygon points="${right}" style="fill:color-mix(in srgb,${base} 55%,#000)"/><polygon points="${top}" style="fill:${base}"/>`;
+/* ---------- Tab 3: 3D rak (WebGL2 langsung, tanpa library) ---------- */
+const V3={cell:1.1,depth:1.1,gap:.08,aisle:3.0};
+const vSub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const vCross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const vDot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const vNorm=a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l]};
+const mPersp=(f,a,n,fa)=>{const t=1/Math.tan(f/2),nf=1/(n-fa);return new Float32Array([t/a,0,0,0,0,t,0,0,0,0,(fa+n)*nf,-1,0,0,2*fa*n*nf,0])};
+const mLook=(e,c,u)=>{const z=vNorm(vSub(e,c)),x=vNorm(vCross(u,z)),y=vCross(z,x);
+  return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-vDot(x,e),-vDot(y,e),-vDot(z,e),1])};
+const mMul=(a,b)=>{const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s}return o};
+const G3={gl:null,cam:{yaw:-.55,pitch:.6,dist:200,t:[0,0,0]},mesh:null,fov:1.05,raf:0};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+
+function buildMesh(){
+  const {cell:CELL,depth:D,gap:GAP,aisle:AIS}=V3,K=+state.k,P=+state.pitch,only=state.only==='ex';
+  let V=new Float32Array(1<<21),nv=0,I=new Uint32Array(1<<21),ni=0;
+  const ensure=(dv,di)=>{
+    if((nv+dv)*9>V.length){const a=new Float32Array(Math.max(V.length*2,(nv+dv)*9));a.set(V);V=a}
+    if(ni+di>I.length){const a=new Uint32Array(Math.max(I.length*2,ni+di));a.set(I);I=a}};
+  const vert=(p,n,c)=>{const o=nv*9;V[o]=p[0];V[o+1]=p[1];V[o+2]=p[2];V[o+3]=n[0];V[o+4]=n[1];V[o+5]=n[2];V[o+6]=c[0];V[o+7]=c[1];V[o+8]=c[2];return nv++};
+  function obox(c,u,v,w,col){
+    for(const [a,b1,b2] of [[u,v,w],[v,w,u],[w,u,v]])for(const s of [-1,1]){
+      const fc=[c[0]+s*a[0],c[1]+s*a[1],c[2]+s*a[2]],n=vNorm(a);n[0]*=s;n[1]*=s;n[2]*=s;
+      const Pp=(i,j)=>[fc[0]+i*b1[0]+j*b2[0],fc[1]+i*b1[1]+j*b2[1],fc[2]+i*b1[2]+j*b2[2]];
+      ensure(4,6);
+      const k=vert(Pp(-1,-1),n,col);vert(Pp(1,-1),n,col);vert(Pp(1,1),n,col);vert(Pp(-1,1),n,col);
+      I[ni++]=k;I[ni++]=k+1;I[ni++]=k+2;I[ni++]=k;I[ni++]=k+2;I[ni++]=k+3;
+    }
+  }
+  const box=(cx,cy,cz,sx,sy,sz,col)=>obox([cx,cy,cz],[sx/2,0,0],[0,sy/2,0],[0,0,sz/2],col);
+  function brace(p0,p1,z,col){
+    const dx=p1[0]-p0[0],dy=p1[1]-p0[1],l=Math.hypot(dx,dy);
+    obox([(p0[0]+p1[0])/2,(p0[1]+p1[1])/2,z],[dx/2,dy/2,0],[-dy/l*.025,dx/l*.025,0],[0,0,.025],col);
+  }
+  const BLUE=[.12,.37,.71],ORANGE=[.93,.47,.10],GREY=[.62,.66,.70],GREYB=[.42,.46,.50],YEL=[.96,.78,.10];
+  const xc=new Map();let x=0;
+  allCols.forEach((c,i)=>{if(i>0)x+=(c-allCols[i-1]===1)?D+GAP:D+AIS;xc.set(c,x)});
+  let rmin=1e9,rmax=0;
+  allCols.forEach(c=>cellsByCol.get(c).forEach((_,r)=>{rmin=Math.min(rmin,r);rmax=Math.max(rmax,r)}));
+  const zOf=r=>(r-rmin)*CELL,inner=D/2-.05;
+  function frame(cx,z,lv,nw,guard){
+    const H=lv*P+.2,col=nw?GREY:BLUE;
+    [-1,1].forEach(s=>{box(cx+s*inner,H/2,z,.09,H,.1,col);if(guard)box(cx+s*inner,.28,z,.22,.56,.2,YEL)});
+    for(let i=0;i<lv;i++){
+      brace([cx+(i%2?1:-1)*inner,i*P+.1],[cx-(i%2?1:-1)*inner,(i+1)*P+.1],z,col);
+      if(i%2===0)box(cx,i*P+.1,z,2*inner,.05,.05,col);
+    }
+    box(cx,lv*P+.1,z,2*inner,.05,.05,col);
+  }
+  allCols.forEach(c=>{
+    const m=cellsByCol.get(c),rows=[...m.keys()].sort((a,b)=>a-b),groups=[];
+    rows.forEach(r=>{
+      const b=m.get(r);if(only&&b.nw)return;
+      const g=groups[groups.length-1];
+      if(g&&g.r1===r-1&&g.lv===b.lv&&g.nw===b.nw&&g.n<K&&g.code===b.code){g.r1=r;g.n++}
+      else groups.push({r0:r,r1:r,lv:b.lv,nw:b.nw,n:1,code:b.code});
+    });
+    const cx=xc.get(c);
+    groups.forEach((g,i)=>{
+      const pv=groups[i-1],cont=pv&&pv.r1+1===g.r0,nx=groups[i+1];
+      frame(cx,zOf(g.r0)-CELL/2,cont?Math.max(pv.lv,g.lv):g.lv,cont?(pv.nw&&g.nw):g.nw,!cont);
+      if(!nx||nx.r0!==g.r1+1)frame(cx,zOf(g.r1)+CELL/2,g.lv,g.nw,true);
+      const z0=zOf(g.r0)-CELL/2,z1=zOf(g.r1)+CELL/2;
+      for(let l=2;l<=g.lv;l++)[-1,1].forEach(s=>box(cx+s*inner,(l-1)*P-.09,(z0+z1)/2,.07,.16,z1-z0-.06,g.nw?GREYB:ORANGE));
+    });
   });
-  const pad=10,vb=`${(minx-pad).toFixed(0)} ${(miny-pad).toFixed(0)} ${(maxx-minx+2*pad).toFixed(0)} ${(maxy-miny+2*pad).toFixed(0)}`;
-  const w=Math.round(maxx-minx+2*pad),h=Math.round(maxy-miny+2*pad);
-  $('#iso-out').innerHTML=`<svg width="${w}" height="${h}" viewBox="${vb}" role="img" aria-label="Gambaran 3D isometrik gudang" style="margin-inline:auto">${out}</svg>`;
-  legend($('#legend3'),state.col3||'status');
+  const xs=[...xc.values()],x0=Math.min(...xs)-14,x1=Math.max(...xs)+14,z0=-14,z1=zOf(rmax)+CELL+60;
+  ensure(4,6);
+  const k=vert([x0,-.01,z0],[0,1,0],[-1,0,0]);vert([x1,-.01,z0],[0,1,0],[-1,0,0]);vert([x1,-.01,z1],[0,1,0],[-1,0,0]);vert([x0,-.01,z1],[0,1,0],[-1,0,0]);
+  I[ni++]=k;I[ni++]=k+1;I[ni++]=k+2;I[ni++]=k;I[ni++]=k+2;I[ni++]=k+3;
+  const labels=[];
+  racks.forEach(r=>{
+    const cs=[...new Set(r.cells.filter(c=>!(only&&c[3])).map(c=>c[1]))];if(!cs.length)return;
+    const mr=Math.max(...r.cells.filter(c=>!(only&&c[3])).map(c=>c[0]));
+    labels.push({code:r.code,x:cs.reduce((a,c)=>a+xc.get(c),0)/cs.length,z:zOf(mr)+CELL/2+.15,nw:r.cells.every(c=>c[3]),cols:cs.map(c=>xc.get(c))});
+  });
+  return {V:V.subarray(0,nv*9),I:I.subarray(0,ni),ni,xc,labels,b:{x0:Math.min(...xs),x1:Math.max(...xs),z1:zOf(rmax)+CELL/2}};
 }
+function camEye(){const c=G3.cam;return [c.t[0]+c.dist*Math.sin(c.yaw)*Math.cos(c.pitch),c.t[1]+c.dist*Math.sin(c.pitch),c.t[2]+c.dist*Math.cos(c.yaw)*Math.cos(c.pitch)]}
+function setLookAt(e,t){const d=vSub(e,t),dist=Math.hypot(...d);G3.cam={yaw:Math.atan2(d[0],d[2]),pitch:Math.asin(d[1]/dist),dist,t:t.slice()}}
+function preset(p){
+  const b=G3.mesh.b,cx=(b.x0+b.x1)/2,cz=b.z1/2,ext=Math.max(b.x1-b.x0,b.z1);
+  G3.cam.t=[cx,0,cz];G3.cam.dist=ext*1.05;
+  if(p==='ov'){G3.cam.yaw=-.55;G3.cam.pitch=.6}
+  if(p==='top'){G3.cam.yaw=0;G3.cam.pitch=1.5;G3.cam.dist=ext*1.15}
+  if(p==='south'){G3.cam.yaw=0;G3.cam.pitch=.3;G3.cam.dist=ext*.95}
+  if(p==='west'){G3.cam.yaw=-Math.PI/2;G3.cam.pitch=.3;G3.cam.dist=ext*.95}
+  redraw();
+}
+function focusRack(code){
+  const l=G3.mesh.labels.find(q=>q.code===code);if(!l)return;
+  const xr=Math.max(...l.cols)+V3.depth/2+1.7;
+  setLookAt([xr,1.7,l.z+9],[xr-.4,4.4,l.z-40]);redraw();
+}
+const cssRGB=el=>{const m=getComputedStyle(el).backgroundColor.match(/[\d.]+/g)||[255,255,255];return [m[0]/255,m[1]/255,m[2]/255]};
+function paint(){
+  const g=G3.gl,cv=G3.cv;if(!g||!G3.mesh)return;
+  const W=cv.width,H=cv.height;g.viewport(0,0,W,H);
+  const bg=cssRGB($('#p-d3')),dark=(bg[0]*.3+bg[1]*.59+bg[2]*.11)<.5;
+  g.clearColor(bg[0],bg[1],bg[2],1);g.clear(g.COLOR_BUFFER_BIT|g.DEPTH_BUFFER_BIT);
+  const eye=camEye(),VP=mMul(mPersp(G3.fov,W/H,.3,3000),mLook(eye,G3.cam.t,[0,1,0]));
+  g.useProgram(G3.prog);
+  g.uniformMatrix4fv(G3.u.vp,false,VP);g.uniform3fv(G3.u.eye,eye);g.uniform3fv(G3.u.fog,bg);
+  g.uniform3fv(G3.u.floor,dark?[.17,.2,.22]:[.80,.82,.83]);
+  g.bindVertexArray(G3.vao);g.drawElements(g.TRIANGLES,G3.mesh.ni,g.UNSIGNED_INT,0);
+  const o=G3.ov,cx=o.getContext('2d');cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,o.width,o.height);
+  const foc=(H/2)/Math.tan(G3.fov/2);
+  G3.mesh.labels.forEach(l=>{
+    const p=[l.x,3.4,l.z],w=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];if(w<=0)return;
+    const sx=((VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/w*.5+.5)*W,sy=(1-((VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/w*.5+.5))*H;
+    const s=1.5*foc/w;if(s<26||s>420||sx<-s||sx>W+s||sy<-s||sy>H+s)return;
+    const bw=s,bh=s*.62;
+    cx.fillStyle='#f4f1ea';cx.strokeStyle=l.nw?'#6b747c':'#7a6a55';cx.lineWidth=Math.max(1,s*.03);
+    cx.beginPath();cx.rect(sx-bw/2,sy-bh/2,bw,bh);cx.fill();cx.stroke();
+    cx.fillStyle=l.nw?'#4d5660':'#1d4fa8';cx.font=`700 ${Math.round(s*.4)}px "Barlow Condensed",Arial Narrow,sans-serif`;
+    cx.textAlign='center';cx.textBaseline='middle';cx.fillText(l.code,sx,sy+s*.02);
+  });
+}
+function redraw(){if(G3.raf)return;G3.raf=requestAnimationFrame(()=>{G3.raf=0;paint()})}
+function initGL(){
+  const cv=$('#gl3'),ov=$('#ov3');G3.cv=cv;G3.ov=ov;
+  const g=cv.getContext('webgl2',{antialias:true});
+  if(!g){$('#gl-msg').hidden=false;return false}
+  const sh=(t,s)=>{const o=g.createShader(t);g.shaderSource(o,s);g.compileShader(o);if(!g.getShaderParameter(o,g.COMPILE_STATUS))throw new Error(g.getShaderInfoLog(o));return o};
+  const pr=g.createProgram();
+  g.attachShader(pr,sh(g.VERTEX_SHADER,`#version 300 es
+in vec3 aP;in vec3 aN;in vec3 aC;uniform mat4 uVP;out vec3 vN;out vec3 vC;out vec3 vW;
+void main(){vN=aN;vC=aC;vW=aP;gl_Position=uVP*vec4(aP,1.);}`));
+  g.attachShader(pr,sh(g.FRAGMENT_SHADER,`#version 300 es
+precision mediump float;in vec3 vN;in vec3 vC;in vec3 vW;uniform vec3 uEye;uniform vec3 uFog;uniform vec3 uFloor;out vec4 o;
+void main(){vec3 n=normalize(vN);vec3 base=vC.r<0.?uFloor:vC;
+float d=.38+max(dot(n,normalize(vec3(.4,.9,.3))),0.)*.62+max(dot(n,normalize(vec3(-.6,.2,-.7))),0.)*.18;
+vec3 c=base*d;float f=clamp((length(vW-uEye)-90.)/520.,0.,.8);o=vec4(mix(c,uFog,f),1.);}`));
+  g.linkProgram(pr);if(!g.getProgramParameter(pr,g.LINK_STATUS))throw new Error(g.getProgramInfoLog(pr));
+  G3.gl=g;G3.prog=pr;G3.u={vp:g.getUniformLocation(pr,'uVP'),eye:g.getUniformLocation(pr,'uEye'),fog:g.getUniformLocation(pr,'uFog'),floor:g.getUniformLocation(pr,'uFloor')};
+  G3.vao=g.createVertexArray();G3.vb=g.createBuffer();G3.ib=g.createBuffer();
+  g.enable(g.DEPTH_TEST);
+  const size=()=>{const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+    cv.width=ov.width=Math.max(10,Math.round(r.width*d));cv.height=ov.height=Math.max(10,Math.round(r.height*d));redraw()};
+  new ResizeObserver(size).observe(cv);size();
+  const pts=new Map();let pan=false;
+  cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);pan=e.button===2||e.shiftKey});
+  cv.addEventListener('pointermove',e=>{
+    const p=pts.get(e.pointerId);if(!p)return;const dx=e.clientX-p[0],dy=e.clientY-p[1],c=G3.cam;
+    if(pts.size===2){const o2=[...pts.entries()].find(([id])=>id!==e.pointerId)[1];
+      const d0=Math.hypot(p[0]-o2[0],p[1]-o2[1]),d1=Math.hypot(e.clientX-o2[0],e.clientY-o2[1]);if(d1>0)c.dist=clamp(c.dist*d0/d1,4,1500)}
+    else if(pan){const s=c.dist*.0016;c.t[0]+=-Math.cos(c.yaw)*dx*s+(-Math.sin(c.yaw))*dy*s;c.t[2]+=Math.sin(c.yaw)*dx*s+(-Math.cos(c.yaw))*dy*s}
+    else{c.yaw-=dx*.006;c.pitch=clamp(c.pitch+dy*.006,-.05,1.55)}
+    pts.set(e.pointerId,[e.clientX,e.clientY]);redraw()});
+  ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,e=>pts.delete(e.pointerId)));
+  cv.addEventListener('wheel',e=>{e.preventDefault();G3.cam.dist=clamp(G3.cam.dist*Math.exp(e.deltaY*.0012),4,1500);redraw()},{passive:false});
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  return true;
+}
+let g3timer=0;
+function rebuild3D(keepCam){
+  if(!G3.gl)return;
+  const g=G3.gl,m=buildMesh();G3.mesh=m;G3.ni=m.ni;
+  g.bindVertexArray(G3.vao);
+  g.bindBuffer(g.ARRAY_BUFFER,G3.vb);g.bufferData(g.ARRAY_BUFFER,m.V,g.STATIC_DRAW);
+  g.bindBuffer(g.ELEMENT_ARRAY_BUFFER,G3.ib);g.bufferData(g.ELEMENT_ARRAY_BUFFER,m.I,g.STATIC_DRAW);
+  [['aP',0],['aN',12],['aC',24]].forEach(([n,o])=>{const l=g.getAttribLocation(G3.prog,n);g.enableVertexAttribArray(l);g.vertexAttribPointer(l,3,g.FLOAT,false,36,o)});
+  const sel=$('#f-rak');sel.innerHTML='<option value="">Masuk ke lorong...</option>'+m.labels.slice().sort((a,b)=>a.code.localeCompare(b.code)).map(l=>`<option value="${l.code}">${l.code}</option>`).join('');
+  if(!keepCam)preset('ov');
+  paint();
+  $('#d3-info').textContent=`${fmt(Math.round(m.ni/36))} bagian rak digambar`;
+}
+function render3D(){
+  if(!G3.gl&&!G3.failed){try{if(!initGL())G3.failed=true}catch(e){G3.failed=true;$('#gl-msg').hidden=false;$('#gl-msg').textContent='Gagal menyiapkan 3D: '+e.message}}
+  if(G3.failed)return;
+  rebuild3D(false);
+}
+function debounce3D(){clearTimeout(g3timer);g3timer=setTimeout(()=>rebuild3D(true),150)}
 
 /* ---------- Tab 4: rekap ---------- */
 function renderRecap(){
@@ -300,21 +481,97 @@ function seg(id,key,after){
 }
 seg('#s-side','side',renderSide);seg('#s-col','col',renderSide);
 seg('#s-mode','mode',renderCross);seg('#s-view','view',renderCross);
-seg('#s-col3','col3',()=>{renderIso()});
 $('#g-sel').addEventListener('change',e=>{state.g=e.target.value;renderSide()});
 $('#r-sl').addEventListener('input',e=>{state.row=+e.target.value;renderCross()});
 document.querySelectorAll('[data-j]').forEach(b=>b.addEventListener('click',()=>{state.row=+b.dataset.j;state.mode='cut';
   $('#r-sl').value=state.row;$('#s-mode').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v==='cut'));renderCross()}));
-$('#i-rot').addEventListener('change',e=>{state.rot=e.target.value;renderIso()});
-$('#i-h').addEventListener('input',e=>{state.ih=e.target.value;renderIso()});
+$('#s-pre').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&G3.mesh)preset(b.dataset.p)});
+$('#f-rak').addEventListener('change',e=>{if(e.target.value)focusRack(e.target.value)});
+$('#k-sl').addEventListener('input',e=>{state.k=+e.target.value;$('#k-val').textContent=e.target.value;debounce3D()});
+$('#p-sl').addEventListener('input',e=>{state.pitch=+e.target.value;$('#p-val').textContent=e.target.value.replace('.',',')+' m';debounce3D()});
+$('#o-sel').addEventListener('change',e=>{state.only=e.target.value;rebuild3D(true)});
 const done={};
 function show(t){
   state.tab=t;
   document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
-  ['side','cross','iso','recap'].forEach(k=>$('#p-'+k).hidden=k!==t);
-  if(!done[t]){done[t]=1;({side:renderSide,cross:renderCross,iso:renderIso,recap:renderRecap})[t]()}
+  ['side','cross','d3','recap'].forEach(k=>$('#p-'+k).hidden=k!==t);
+  if(!done[t]){done[t]=1;({side:renderSide,cross:renderCross,d3:render3D,recap:renderRecap})[t]()}
 }
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)show(b.dataset.t)});
+prepRacks();prepGroups();prepCols();
 const h=location.hash.slice(1);
-show(['side','cross','iso','recap'].includes(h)?h:'side');
+show(['side','cross','d3','recap'].includes(h)?h:'side');
+
+/* ---------- unggah Excel (ExcelJS dimuat saat dibutuhkan, agar warna sel terbaca) ---------- */
+function loadScript(src){return new Promise((ok,no)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>no(new Error('Gagal memuat pembaca Excel. Periksa koneksi internet.'));document.head.appendChild(e)})}
+function parseSheet(G){
+  /* G: {rowCount,columnCount,val(r,c),isNew(r,c)} */
+  const re=/^[A-D]\d\d$/,heads=[];
+  const maxR=Math.min(G.rowCount,200),maxC=Math.min(G.columnCount,200);
+  for(let r=11;r<=maxR;r++)for(let c=5;c<=maxC;c++){const v=G.val(r,c);if(typeof v==='string'&&re.test(v.trim()))heads.push([r,c,v.trim()])}
+  const hrows=[...new Set(heads.map(h=>h[0]))].sort((a,b)=>a-b);
+  const racks={},covered=new Set();
+  hrows.forEach(hr=>{
+    const hs=heads.filter(h=>h[0]===hr).sort((a,b)=>a[1]-b[1]);
+    hs.forEach(([_,c,code],i)=>{
+      const nx=heads.filter(h=>h[1]===c&&h[0]>hr).map(h=>h[0]);
+      const end=nx.length?Math.min(...nx)-1:maxR;
+      const nc=i+1<hs.length?hs[i+1][1]:c+2;
+      const cells=[];
+      for(let rr=hr+1;rr<=Math.min(end,91);rr++)for(let cc=c;cc<Math.min(c+2,nc);cc++){
+        const v=G.val(rr,cc);
+        if(typeof v==='number'&&v>0){cells.push([rr,cc,Math.round(v),G.isNew(rr,cc)]);covered.add(cc)}
+      }
+      if(cells.length)racks[code]={code,grp:code[0],cells};
+    });
+  });
+  for(let cc=5;cc<100;cc++){
+    if(covered.has(cc))continue;
+    const cells=[];
+    for(let rr=12;rr<=91;rr++){const v=G.val(rr,cc);if(typeof v==='number')cells.push([rr,cc,Math.round(v),G.isNew(rr,cc)])}
+    if(cells.length>=5)racks.SMP={code:'SMP',grp:'S',cells};
+  }
+  const pp={};
+  for(let r=2;r<=8;r++)for(let c=1;c<40;c++){
+    const v=G.val(r,c),n=G.val(r,c+1);
+    if(typeof v==='string'&&re.test(v)&&typeof n==='number')pp[v]=Math.round(n);
+  }
+  return {racks:Object.values(racks),pp};
+}
+function fromExcelJS(ws){
+  const val=(r,c)=>{let v=ws.getCell(r,c).value;
+    if(v&&typeof v==='object'){if('result' in v)v=v.result;else if(v.richText)v=v.richText.map(t=>t.text).join('')}
+    return v};
+  const isNew=(r,c)=>{const f=ws.getCell(r,c).fill;
+    if(!f||f.type!=='pattern'||f.pattern!=='solid')return 0;
+    const g=f.fgColor;if(!g)return 0;
+    if(g.theme===0)return 0;
+    if(g.argb&&/^(FF|00)FFFFFF$/i.test(g.argb))return 0;
+    return 1};
+  return {rowCount:ws.rowCount,columnCount:ws.columnCount,val,isNew};
+}
+const srcEl=$('#src');
+function say(t,err){srcEl.textContent=t;srcEl.style.color=err?'var(--warn)':''}
+async function loadFile(f){
+  if(!f)return;
+  if(!/\.xlsx$/i.test(f.name)){say('Format tidak didukung. Gunakan file .xlsx.',true);return}
+  try{
+    say('Membaca '+f.name+' ...');
+    if(!window.ExcelJS)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js');
+    const wb=new ExcelJS.Workbook();
+    await wb.xlsx.load(await f.arrayBuffer());
+    const ws=wb.worksheets.find(w=>/exist/i.test(w.name))||wb.worksheets[0];
+    const d=parseSheet(fromExcelJS(ws));
+    if(!d.racks.length){say('Kode rak (A01, B01, C01, D01, ...) tidak ditemukan di sheet "'+ws.name+'". Pastikan layout sama dengan Rak_JDC.xlsx.',true);return}
+    DATA=d;prepRacks();prepGroups();prepCols();
+    Object.keys(done).forEach(k=>delete done[k]);
+    show(state.tab);
+    say('Sumber: '+f.name+' (sheet '+ws.name+'), '+d.racks.length+' rak terbaca.');
+  }catch(e){say('Gagal membaca file: '+e.message,true)}
+}
+$('#f-btn').addEventListener('click',()=>$('#f-in').click());
+$('#f-in').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value=''});
+['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();if(ev==='drop')loadFile(e.dataTransfer.files[0])}));
 </script>
+</body>
+</html>

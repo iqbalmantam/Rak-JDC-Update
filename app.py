@@ -42,4 +42,6 @@ if not data["racks"]:
     st.stop()
 
 html = TEMPLATE.replace("__DATA__", json.dumps(data, separators=(",", ":")))
+# unggah sudah ditangani panel kiri Streamlit, sembunyikan panel unggah di dalam halaman
+html = html.replace('<div class="panel" id="drop">', '<div class="panel" id="drop" hidden>')
 components.html(html, height=1500, scrolling=True)
