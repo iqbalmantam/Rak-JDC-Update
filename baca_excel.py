@@ -1,6 +1,9 @@
 """Baca sheet layout rak (mis. 'Rak Existing') menjadi struktur data untuk tampak samping."""
 import re
+
 import openpyxl
+
+from customers import tandai_customer
 
 KODE = re.compile(r"[A-D]\d\d")
 
@@ -70,4 +73,7 @@ def baca_rak(file, sheet=None):
             n = wv.cell(r, c + 1).value
             if isinstance(v, str) and KODE.fullmatch(v) and isinstance(n, (int, float)):
                 pp[v] = int(n)
-    return dict(racks=list(racks.values()), pp=pp)
+    data = dict(racks=list(racks.values()), pp=pp)
+    if hasattr(file, "seek"):
+        file.seek(0)
+    return tandai_customer(data, file, ws, wb_f.worksheets.index(ws) + 1)

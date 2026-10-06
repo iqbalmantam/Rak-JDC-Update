@@ -12,7 +12,7 @@
   --bg:#eef0ee; --panel:#ffffff; --ink:#1b2127; --muted:#5b6670; --line:#d3d8d6;
   --exist:#2d5f8a; --new:#a9b2b9; --accent:#d9731a; --accent-ink:#ffffff;
   --l3:#cfe0ee; --l4:#b4cfe4; --l5:#98bad8; --l6:#6a9ac3; --l7:#2d5f8a; --l8:#214b70; --l9:#16364f;
-  --ok:#2a7d4f; --warn:#b3601a;
+  --ok:#2a7d4f; --warn:#b3601a; --none:#d9dee2;
   --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -21,12 +21,12 @@
   --bg:#12171b; --panel:#1a2026; --ink:#e7eaec; --muted:#93a0aa; --line:#2b343b;
   --exist:#5b9bd0; --new:#66737e; --accent:#f08a2e; --accent-ink:#14100a;
   --l3:#25405a; --l4:#2f5273; --l5:#3d6c97; --l6:#5088b8; --l7:#6ea6d6; --l8:#92c0e6; --l9:#bcdaf3;
-  --ok:#5fc08b; --warn:#e69a52; color-scheme:dark;}}
+  --ok:#5fc08b; --warn:#e69a52; --none:#38424c; color-scheme:dark;}}
 :root[data-theme="dark"]{
   --bg:#12171b; --panel:#1a2026; --ink:#e7eaec; --muted:#93a0aa; --line:#2b343b;
   --exist:#5b9bd0; --new:#66737e; --accent:#f08a2e; --accent-ink:#14100a;
   --l3:#25405a; --l4:#2f5273; --l5:#3d6c97; --l6:#5088b8; --l7:#6ea6d6; --l8:#92c0e6; --l9:#bcdaf3;
-  --ok:#5fc08b; --warn:#e69a52; color-scheme:dark;}
+  --ok:#5fc08b; --warn:#e69a52; --none:#38424c; color-scheme:dark;}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
 .wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:16px}
 header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
@@ -64,6 +64,12 @@ input[type=range]{accent-color:var(--accent);width:min(320px,60vw)}
 .line .nm{font-family:var(--f-display);font-weight:600;font-size:19px;line-height:1;white-space:nowrap}
 .line .nm small{display:block;font:400 11px var(--f-mono);color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
 svg{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chip i{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.3)}
+.chip small{font:400 11px var(--f-mono);color:var(--muted)}
+.chip[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.legend i.nn{background:var(--none);border:1px solid var(--line)}
 .cv3{position:relative;height:min(68vh,640px);min-height:380px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
 .cv3 canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #gl3{touch-action:none;cursor:grab}
@@ -110,14 +116,21 @@ body{margin:0}
     <button class="tab" role="tab" data-t="recap" aria-selected="false">Rekap PP</button>
   </div>
 
+  <div class="panel" id="colbar">
+    <div class="controls">
+      <div class="ctl"><span class="lbl">Warna</span>
+        <span class="seg" id="s-col"><button data-v="status" aria-pressed="true">Status</button><button data-v="level" aria-pressed="false">Jumlah level</button><button data-v="client" aria-pressed="false" hidden>Client</button></span></div>
+    </div>
+    <div class="chips" id="chips" hidden></div>
+    <div class="note" id="cnote"></div>
+  </div>
+
   <section class="panel" id="p-side">
     <div class="controls">
       <div class="ctl"><label for="g-sel">Baris rak</label>
         <select id="g-sel"></select></div>
       <div class="ctl"><span class="lbl">Dilihat dari</span>
         <span class="seg" id="s-side"><button data-v="W" aria-pressed="true">Barat</button><button data-v="E" aria-pressed="false">Timur</button></span></div>
-      <div class="ctl"><span class="lbl">Warna</span>
-        <span class="seg" id="s-col"><button data-v="status" aria-pressed="true">Status</button><button data-v="level" aria-pressed="false">Jumlah level</button></span></div>
     </div>
     <div class="legend" id="legend1"></div>
     <div class="scroll"><div id="side-out"></div></div>
@@ -153,13 +166,15 @@ body{margin:0}
       <div class="ctl"><label for="p-sl">Tinggi per level</label><input type="range" id="p-sl" min="1.4" max="2.2" step="0.1" value="1.7"><b id="p-val" style="font-family:var(--f-mono);font-weight:500">1,7 m</b></div>
       <div class="ctl"><label for="o-sel">Tampilkan</label><select id="o-sel"><option value="all">Existing + baru</option><option value="ex">Existing saja</option></select></div>
     </div>
-    <div class="legend"><span><i style="background:#1f5eb5"></i>Tiang existing</span><span><i style="background:#ee7819"></i>Balok existing</span><span><i style="background:#9ea8b3"></i>Racking baru (abu-abu)</span><span><i style="background:#f5c71a"></i>Pelindung tiang</span><span id="d3-info"></span></div>
+    <div class="legend"><span><i style="background:#1f5eb5"></i>Tiang existing</span><span><i style="background:#ee7819"></i>Balok existing (mode Client: warna client)</span><span><i style="background:#9ea8b3"></i>Racking baru (abu-abu)</span><span><i style="background:#f5c71a"></i>Pelindung tiang</span><span id="d3-info"></span></div>
     <div class="cv3"><canvas id="gl3"></canvas><canvas id="ov3"></canvas><div id="gl-msg" class="note" hidden style="padding:16px">Browser ini tidak mendukung WebGL2, jadi tampilan 3D tidak bisa dibuka. Gunakan Chrome, Edge, Firefox, atau Safari terbaru.</div></div>
     <div class="note">Putar: seret. Geser: seret sambil menahan Shift atau klik kanan. Perbesar: roda mouse atau dua jari. Papan kode rak muncul saat didekati. Ukuran adalah perkiraan: 1 posisi pallet 1,1 m, kedalaman rak 1,1 m, lorong 3 m. Isi rak tidak digambar. Tinggi tiap bay mengikuti jumlah level di Excel; lantai dasar dihitung sebagai level 1.</div>
   </section>
 
   <section class="panel" id="p-recap" hidden>
     <div class="scroll"><table id="recap"></table></div>
+    <div class="lbl" id="rc-h" hidden>PP existing per client</div>
+    <div class="scroll"><table id="recap2"></table></div>
     <div class="note" id="recap-note"></div>
   </section>
 </div>
@@ -169,14 +184,14 @@ let DATA=__DATA__;
 const $=s=>document.querySelector(s);
 const colName=n=>{let s='';while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
 const fmt=n=>n.toLocaleString('id-ID');
-let racks,byCode,EX,NW,GROUPS,cellsByCol,allCols;
+let racks,byCode,EX,NW,GROUPS,cellsByCol,allCols,CUST=[],CPP=[],CRK=[];
 const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
 function prepRacks(){
 racks=DATA.racks.map(r=>{
   const bays=new Map();
-  r.cells.forEach(([row,col,lv,nw])=>{
-    const b=bays.get(row)||{row,lv:0,pp:0,nw:0,n:0};
-    b.lv=Math.max(b.lv,lv);b.pp+=lv;b.nw=b.nw||nw;b.n++;bays.set(row,b);
+  r.cells.forEach(([row,col,lv,nw,cl=-1])=>{
+    const b=bays.get(row)||{row,lv:0,pp:0,nw:0,n:0,cl:-1};
+    b.lv=Math.max(b.lv,lv);b.pp+=lv;b.nw=b.nw||nw;b.n++;if(b.cl<0)b.cl=cl;bays.set(row,b);
   });
   const ex=r.cells.filter(c=>!c[3]).reduce((a,c)=>a+c[2],0);
   const nw=r.cells.filter(c=>c[3]).reduce((a,c)=>a+c[2],0);
@@ -184,6 +199,8 @@ racks=DATA.racks.map(r=>{
 });
 byCode=Object.fromEntries(racks.map(r=>[r.code,r]));
 EX=sum(racks,r=>r.ex);NW=sum(racks,r=>r.nwpp);
+CUST=DATA.cust||[];CPP=CUST.map(()=>0);CRK=CUST.map(()=>new Set());
+racks.forEach(r=>r.cells.forEach(([row,col,lv,nw,cl=-1])=>{if(cl>=0&&!nw){CPP[cl]+=lv;CRK[cl].add(r.code)}}));
 $('#kpis').innerHTML=[['PP existing',fmt(EX)],['PP tambahan',fmt(NW)],['Total rencana',fmt(EX+NW)],['Rak',racks.length]]
   .map(([l,v])=>`<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join('');
 }
@@ -201,12 +218,35 @@ $('#g-sel').innerHTML=Object.entries(GROUPS).map(([k,g])=>`<option value="${k}">
 if(!GROUPS[state.g])state.g='AB';
 $('#g-sel').value=state.g;
 }
-const state={tab:'side',g:'AB',side:'W',col:'status',row:40,mode:'cut',view:'S',k:3,pitch:1.7,only:'all'};
+const state={tab:'side',g:'AB',side:'W',col:'status',cf:-1,row:40,mode:'cut',view:'S',k:3,pitch:1.7,only:'all'};
 
 const fillOf=(lv,mode)=>mode==='level'?`var(--l${Math.min(9,Math.max(3,lv))})`:'var(--exist)';
-const colourFor=(lv,nw,mode)=>nw&&mode==='status'?'var(--new)':fillOf(lv,mode);
+const colourFor=(lv,nw,mode,cl=-1)=>{
+  if(mode==='client')return nw?'var(--new)':(cl>=0&&CUST[cl]?CUST[cl].color:'var(--none)');
+  return nw&&mode==='status'?'var(--new)':fillOf(lv,mode);
+};
+const dimmed=(cl,nw)=>state.col==='client'&&state.cf>=0&&(nw||cl!==state.cf);
+const custName=cl=>cl>=0&&CUST[cl]?CUST[cl].name:'';
+function renderBar(){
+  const has=CUST.length>0;
+  $('#s-col button[data-v="client"]').hidden=!has;
+  if(!has&&state.col==='client')state.col='status';
+  $('#s-col').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===state.col));
+  const ch=$('#chips');
+  if(has&&state.col==='client'){
+    ch.hidden=false;
+    ch.innerHTML=`<button class="chip" data-i="-1" aria-pressed="${state.cf<0}">Semua client</button>`+CUST.map((c,i)=>`<button class="chip" data-i="${i}" aria-pressed="${state.cf===i}"><i style="background:${c.color}"></i>${c.name}<small>${fmt(CPP[i])} PP</small></button>`).join('');
+    $('#cnote').textContent='Klik nama client untuk menyorotnya. '+(DATA.cnote||[]).join(' ');
+  }else{ch.hidden=true;$('#cnote').textContent=''}
+}
+function refreshView(){
+  renderBar();
+  Object.keys(done).forEach(k=>delete done[k]);
+  show(state.tab);
+}
 function legend(el,mode){
   const lv=[3,5,6,7,9];
+  if(mode==='client'){el.innerHTML='<span>Warna kotak = client (sesuai kotak teks di Excel)</span><span><i class="nn"></i>Tanpa client</span><span><i class="nw"></i>Racking baru</span>';return}
   el.innerHTML=(mode==='level'
     ?lv.map(l=>`<span><i style="background:var(--l${l})"></i>${l} level</span>`).join('')
     :`<span><i style="background:var(--exist)"></i>Existing</span><span><i class="nw"></i>Racking baru (abu-abu di Excel)</span>`)
@@ -230,8 +270,8 @@ function renderSide(){
     l.parts.forEach(p=>p.bays.forEach((b,row)=>rows.set(row,{...b,code:p.code})));
     rows.forEach((b,row)=>{
       const x=X(row);let rr='';
-      for(let k=1;k<=b.lv;k++) rr+=`<rect x="${x+.75}" y="${H-k*lh+.75}" width="${cw-1.5}" height="${lh-1.5}" rx="1" fill="${colourFor(b.lv,b.nw,state.col)}"${b.nw?' class="nw"':''}/>`;
-      s+=`<g><title>${b.code} · posisi ${row} · ${b.lv} level · ${b.pp} PP${b.n>1?' ('+b.n+' kolom)':''}${b.nw?' · racking baru':''}</title>${rr}</g>`;
+      for(let k=1;k<=b.lv;k++) rr+=`<rect x="${x+.75}" y="${H-k*lh+.75}" width="${cw-1.5}" height="${lh-1.5}" rx="1" fill="${colourFor(b.lv,b.nw,state.col,b.cl)}"${b.nw?' class="nw"':''}${dimmed(b.cl,b.nw)?' opacity=".15"':''}/>`;
+      s+=`<g><title>${b.code} · posisi ${row} · ${b.lv} level · ${b.pp} PP${b.n>1?' ('+b.n+' kolom)':''}${b.nw?' · racking baru':''}${custName(b.cl)?' · '+custName(b.cl):''}</title>${rr}</g>`;
     });
     s+='</svg>';
     const ex=sum(l.parts,p=>p.ex),nw=sum(l.parts,p=>p.nwpp);
@@ -252,9 +292,9 @@ function renderSide(){
 /* ---------- Tab 2: potongan melintang ---------- */
 function prepCols(){
 cellsByCol=new Map();
-racks.forEach(r=>r.cells.forEach(([row,col,lv,nw])=>{
+racks.forEach(r=>r.cells.forEach(([row,col,lv,nw,cl=-1])=>{
   if(!cellsByCol.has(col))cellsByCol.set(col,new Map());
-  cellsByCol.get(col).set(row,{row,lv,nw,code:r.code});
+  cellsByCol.get(col).set(row,{row,lv,nw,code:r.code,cl});
 }));
 allCols=[...cellsByCol.keys()].sort((a,b)=>a-b);
 let r0=1e9,r1=0;racks.forEach(r=>r.cells.forEach(c=>{r0=Math.min(r0,c[0]);r1=Math.max(r1,c[0])}));
@@ -277,8 +317,8 @@ function renderCross(){
   allCols.forEach(c=>{
     const b=pick(c);if(!b)return;
     let rr='';
-    for(let k=1;k<=b.lv;k++) rr+=`<rect x="${X(c)+.6}" y="${mx*lh-k*lh+.8}" width="${cw-1.2}" height="${lh-1.6}" rx="1" fill="${colourFor(b.lv,b.nw,'status')}"${b.nw?' class="nw"':''}/>`;
-    s+=`<g><title>${b.code} · kolom ${colName(c)} · posisi ${b.row} · ${b.lv} level${b.nw?' · racking baru':''}</title>${rr}</g>`;
+    for(let k=1;k<=b.lv;k++) rr+=`<rect x="${X(c)+.6}" y="${mx*lh-k*lh+.8}" width="${cw-1.2}" height="${lh-1.6}" rx="1" fill="${colourFor(b.lv,b.nw,state.col,b.cl)}"${b.nw?' class="nw"':''}${dimmed(b.cl,b.nw)?' opacity=".15"':''}/>`;
+    s+=`<g><title>${b.code} · kolom ${colName(c)} · posisi ${b.row} · ${b.lv} level${b.nw?' · racking baru':''}${custName(b.cl)?' · '+custName(b.cl):''}</title>${rr}</g>`;
     const key=b.code;const e=labelled.get(key)||{min:1e9,max:0};e.min=Math.min(e.min,X(c));e.max=Math.max(e.max,X(c)+cw);labelled.set(key,e);
   });
   labelled.forEach((e,code)=>{const cx=(e.min+e.max)/2;s+=`<text transform="translate(${cx+3},${mx*lh+8}) rotate(-90)" font-size="9" text-anchor="end">${code}</text>`});
@@ -286,7 +326,7 @@ function renderCross(){
   $('#cross-out').innerHTML=s;
   $('#r-val').textContent=state.mode==='cut'?`posisi ${state.row}`:'semua posisi';
   $('#r-sl').disabled=state.mode!=='cut';
-  legend($('#legend2'),'status');
+  legend($('#legend2'),state.col);
 }
 
 /* ---------- Tab 3: 3D rak (WebGL2 langsung, tanpa library) ---------- */
@@ -323,7 +363,11 @@ function buildMesh(){
     const dx=p1[0]-p0[0],dy=p1[1]-p0[1],l=Math.hypot(dx,dy);
     obox([(p0[0]+p1[0])/2,(p0[1]+p1[1])/2,z],[dx/2,dy/2,0],[-dy/l*.025,dx/l*.025,0],[0,0,.025],col);
   }
-  const BLUE=[.12,.37,.71],ORANGE=[.93,.47,.10],GREY=[.62,.66,.70],GREYB=[.42,.46,.50],YEL=[.96,.78,.10];
+  const BLUE=[.12,.37,.71],ORANGE=[.93,.47,.10],GREY=[.62,.66,.70],GREYB=[.42,.46,.50],YEL=[.96,.78,.10],NONEC=[.60,.64,.68],DIMC=[.80,.82,.84];
+  const hexRGB=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
+  const beamCol=g=>{
+    if(state.col==='client'){if(g.nw)return GREYB;if(dimmed(g.cl,g.nw))return DIMC;return g.cl>=0&&CUST[g.cl]?hexRGB(CUST[g.cl].color):NONEC}
+    return g.nw?GREYB:ORANGE};
   const xc=new Map();let x=0;
   allCols.forEach((c,i)=>{if(i>0)x+=(c-allCols[i-1]===1)?D+GAP:D+AIS;xc.set(c,x)});
   let rmin=1e9,rmax=0;
@@ -343,8 +387,8 @@ function buildMesh(){
     rows.forEach(r=>{
       const b=m.get(r);if(only&&b.nw)return;
       const g=groups[groups.length-1];
-      if(g&&g.r1===r-1&&g.lv===b.lv&&g.nw===b.nw&&g.n<K&&g.code===b.code){g.r1=r;g.n++}
-      else groups.push({r0:r,r1:r,lv:b.lv,nw:b.nw,n:1,code:b.code});
+      if(g&&g.r1===r-1&&g.lv===b.lv&&g.nw===b.nw&&g.cl===b.cl&&g.n<K&&g.code===b.code){g.r1=r;g.n++}
+      else groups.push({r0:r,r1:r,lv:b.lv,nw:b.nw,n:1,code:b.code,cl:b.cl});
     });
     const cx=xc.get(c);
     groups.forEach((g,i)=>{
@@ -352,7 +396,7 @@ function buildMesh(){
       frame(cx,zOf(g.r0)-CELL/2,cont?Math.max(pv.lv,g.lv):g.lv,cont?(pv.nw&&g.nw):g.nw,!cont);
       if(!nx||nx.r0!==g.r1+1)frame(cx,zOf(g.r1)+CELL/2,g.lv,g.nw,true);
       const z0=zOf(g.r0)-CELL/2,z1=zOf(g.r1)+CELL/2;
-      for(let l=2;l<=g.lv;l++)[-1,1].forEach(s=>box(cx+s*inner,(l-1)*P-.09,(z0+z1)/2,.07,.16,z1-z0-.06,g.nw?GREYB:ORANGE));
+      for(let l=2;l<=g.lv;l++)[-1,1].forEach(s=>box(cx+s*inner,(l-1)*P-.09,(z0+z1)/2,.07,.16,z1-z0-.06,beamCol(g)));
     });
   });
   const xs=[...xc.values()],x0=Math.min(...xs)-14,x1=Math.max(...xs)+14,z0=-14,z1=zOf(rmax)+CELL+60;
@@ -459,7 +503,7 @@ function rebuild3D(keepCam){
 function render3D(){
   if(!G3.gl&&!G3.failed){try{if(!initGL())G3.failed=true}catch(e){G3.failed=true;$('#gl-msg').hidden=false;$('#gl-msg').textContent='Gagal menyiapkan 3D: '+e.message}}
   if(G3.failed)return;
-  rebuild3D(false);
+  rebuild3D(!!G3.mesh);
 }
 function debounce3D(){clearTimeout(g3timer);g3timer=setTimeout(()=>rebuild3D(true),150)}
 
@@ -471,6 +515,8 @@ function renderRecap(){
     return `<tr><td>${r.code}</td><td>${r.maxLv}</td><td>${r.bays.size}</td><td>${fmt(r.ex)}</td><td>${r.nwpp?fmt(r.nwpp):'–'}</td><td>${x==null?'–':fmt(x)}</td><td class="${d==null?'':d===0?'ok':'bad'}">${d==null?'–':d===0?'cocok':(d>0?'+':'')+d}</td></tr>`;
   }).join('');
   $('#recap').innerHTML=`<thead><tr><th>Rak</th><th>Level maks</th><th>Posisi</th><th>PP existing (hitung)</th><th>PP baru</th><th>PP di Excel</th><th>Selisih</th></tr></thead><tbody>${rows}</tbody>`;
+  const rh=$('#rc-h');rh.hidden=!CUST.length;
+  $('#recap2').innerHTML=CUST.length?`<thead><tr><th>Client</th><th>PP existing</th><th>Rak</th></tr></thead><tbody>${CUST.map((c,i)=>`<tr><td><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c.color};margin-right:8px;border:1px solid var(--line)"></i>${c.name}</td><td>${fmt(CPP[i])}</td><td style="white-space:normal;text-align:left;min-width:200px">${[...CRK[i]].sort().join(', ')}</td></tr>`).join('')}<tr><td><b>Total</b></td><td><b>${fmt(sum(CPP,x=>x))}</b></td><td style="text-align:left">${EX-sum(CPP,x=>x)?fmt(EX-sum(CPP,x=>x))+' PP existing belum terhubung ke client':'Semua PP existing terhubung ke client'}</td></tr></tbody>`:'';
   $('#recap-note').textContent='PP existing dihitung dari jumlah level seluruh sel non-abu-abu. Row A dan B cocok dengan tabel PP di sheet. Pada Row C selisihnya muncul karena tabel PP di sheet memakai cakupan baris yang berbeda dari sel berwarna abu-abu; mohon dicek. Row D belum punya angka PP di sheet.';
 }
 
@@ -479,7 +525,8 @@ function seg(id,key,after){
   $(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     state[key]=b.dataset.v;$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));after()});
 }
-seg('#s-side','side',renderSide);seg('#s-col','col',renderSide);
+seg('#s-side','side',renderSide);seg('#s-col','col',()=>refreshView());
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;state.cf=+b.dataset.i;refreshView()});
 seg('#s-mode','mode',renderCross);seg('#s-view','view',renderCross);
 $('#g-sel').addEventListener('change',e=>{state.g=e.target.value;renderSide()});
 $('#r-sl').addEventListener('input',e=>{state.row=+e.target.value;renderCross()});
@@ -492,17 +539,104 @@ $('#p-sl').addEventListener('input',e=>{state.pitch=+e.target.value;$('#p-val').
 $('#o-sel').addEventListener('change',e=>{state.only=e.target.value;rebuild3D(true)});
 const done={};
 function show(t){
-  state.tab=t;
+  state.tab=t;$('#colbar').hidden=(t==='recap');
   document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
   ['side','cross','d3','recap'].forEach(k=>$('#p-'+k).hidden=k!==t);
   if(!done[t]){done[t]=1;({side:renderSide,cross:renderCross,d3:render3D,recap:renderRecap})[t]()}
 }
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)show(b.dataset.t)});
 prepRacks();prepGroups();prepCols();
+if(CUST.length)state.col='client';renderBar();
 const h=location.hash.slice(1);
 show(['side','cross','d3','recap'].includes(h)?h:'side');
 
 /* ---------- unggah Excel (ExcelJS dimuat saat dibutuhkan, agar warna sel terbaca) ---------- */
+/* ----- nama customer dari kotak teks Excel (port dari customers.py) ----- */
+const PUCAT=['#e0457b','#c9a227','#e59ad8','#2aa89a'];
+const XNS={xdr:'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing',a:'http://schemas.openxmlformats.org/drawingml/2006/main'};
+const pyRound=x=>{const r=Math.round(x);return (Math.abs(x%1)===.5&&r%2!==0)?r-1:r};
+function rgb2hls(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;if(mx===mn)return [0,l,0];
+  const d=mx-mn,s=l<=.5?d/(mx+mn):d/(2-mx-mn),rc=(mx-r)/d,gc=(mx-g)/d,bc=(mx-b)/d;
+  let h=r===mx?bc-gc:g===mx?2+rc-bc:4+gc-rc;h=(((h/6)%1)+1)%1;return [h,l,s]}
+function hls2rgb(h,l,s){if(s===0)return [l,l,l];const m2=l<=.5?l*(1+s):l+s-l*s,m1=2*l-m2;
+  const v=(hue)=>{hue=((hue%1)+1)%1;if(hue<1/6)return m1+(m2-m1)*hue*6;if(hue<.5)return m2;if(hue<2/3)return m1+(m2-m1)*(2/3-hue)*6;return m1};
+  return [v(h+1/3),v(h),v(h-1/3)]}
+const toHex=(r,g,b)=>'#'+[r,g,b].map(x=>pyRound(x*255).toString(16).padStart(2,'0')).join('');
+const hexHls=h=>rgb2hls(...[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255));
+const hlsHex=(h,l,s)=>toHex(...hls2rgb(h,Math.min(1,Math.max(0,l)),Math.min(1,Math.max(0,s))));
+function fillColor(fill,theme){
+  const c=fill.firstElementChild,kind=c.localName;
+  const hv=kind==='srgbClr'?c.getAttribute('val'):(theme[c.getAttribute('val')]||'808080');
+  let [r,g,b]=[0,2,4].map(i=>parseInt(hv.slice(i,i+2),16)/255);
+  let [h,l,s]=rgb2hls(r,g,b),alpha=1;
+  for(const m of c.children){const t=m.localName,v=parseInt(m.getAttribute('val'))/100000;
+    if(t==='lumMod')l*=v;else if(t==='lumOff')l+=v;else if(t==='alpha')alpha=v}
+  l=Math.min(1,Math.max(0,l));[r,g,b]=hls2rgb(h,l,s).map(x=>alpha*x+(1-alpha));
+  return toHex(r,g,b);
+}
+function customersFromXml(o,cells){
+  /* o: {drawingXml,themeXml,colw(c) EMU,rowh(r) EMU}; cells: [[row,col,...]] -> {cust,cnote,idx:[...]} */
+  const P=s=>new DOMParser().parseFromString(s,'application/xml');
+  const theme={};
+  if(o.themeXml){const cs=P(o.themeXml).getElementsByTagNameNS(XNS.a,'clrScheme')[0];
+    if(cs)for(const ch of cs.children){const c=ch.firstElementChild;theme[ch.localName]=c.localName==='srgbClr'?c.getAttribute('val'):c.getAttribute('lastClr')}}
+  const cx=[0],cy=[0];
+  for(let c=1;c<200;c++)cx.push(cx[cx.length-1]+o.colw(c));
+  for(let r=1;r<400;r++)cy.push(cy[cy.length-1]+o.rowh(r));
+  const gi=(e,t)=>parseInt(e.getElementsByTagNameNS(XNS.xdr,t)[0].textContent);
+  const pos=e=>[cx[gi(e,'col')]+gi(e,'colOff'),cy[gi(e,'row')]+gi(e,'rowOff')];
+  let boxes=[];
+  for(const anc of P(o.drawingXml).documentElement.children){
+    const ch=n=>[...anc.children].find(e=>e.localName===n&&e.namespaceURI===XNS.xdr);
+    const sp=ch('sp'),fr=ch('from'),to=ch('to');if(!sp||!fr||!to)continue;
+    const txt=[...sp.getElementsByTagNameNS(XNS.a,'p')].map(p=>[...p.getElementsByTagNameNS(XNS.a,'t')].map(t=>t.textContent||'').join('')).join(' ').trim();
+    const spPr=[...sp.children].find(e=>e.localName==='spPr');
+    const fill=spPr&&[...spPr.children].find(e=>e.localName==='solidFill');if(!fill)continue;
+    const [x0,y0]=pos(fr),[x1,y1]=pos(to);
+    boxes.push({name:txt.split(/\s+/).filter(Boolean).join(' '),color:fillColor(fill,theme),x0,y0,x1,y1});
+  }
+  const named={};boxes.forEach(b=>{if(b.name&&!(b.color in named))named[b.color]=b.name});
+  boxes.forEach(b=>{b.inferred=false;if(!b.name){b.name=named[b.color]||'';b.inferred=!!b.name}});
+  boxes=boxes.filter(b=>b.name);
+  const names=[];boxes.forEach(b=>{if(!names.some(n=>n.name===b.name))names.push({name:b.name,color:b.color})});
+  const pucat=PUCAT.slice(),seen={};
+  names.forEach(n=>{
+    if(hexHls(n.color)[1]>.80&&pucat.length)n.color=pucat.shift();
+    if(n.color in seen){const [h,l,s]=hexHls(n.color);n.color=hlsHex(h,l+.16,s)}
+    seen[n.color]=1;
+  });
+  boxes.forEach(b=>{b.idx=names.findIndex(n=>n.name===b.name)});
+  const idx=cells.map(([r,c])=>{
+    const x=cx[c-1]+o.colw(c)/2,y=cy[r-1]+o.rowh(r)/2;
+    const hit=boxes.filter(b=>b.x0<=x&&x<=b.x1&&b.y0<=y&&y<=b.y1).sort((a,b)=>(a.x1-a.x0)*(a.y1-a.y0)-(b.x1-b.x0)*(b.y1-b.y0));
+    return hit.length?hit[0].idx:-1;
+  });
+  const inf={};boxes.forEach(b=>{if(b.inferred)inf[b.name]=(inf[b.name]||0)+1});
+  const cnote=Object.entries(inf).map(([nm,n])=>`${n} kotak tanpa nama dibaca sebagai ${nm} (warna kotak sama).`);
+  cnote.push('Batas customer mengikuti posisi kotak teks di Excel, jadi sel di tepi kotak bisa bergeser satu kolom.');
+  return {cust:names,cnote,idx};
+}
+async function addCustomers(d,buf,wb,ws){
+  if(!window.JSZip)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+  const zip=await JSZip.loadAsync(buf);
+  const sidx=wb.worksheets.indexOf(ws)+1;let dpath=null;
+  const rel=zip.file(`xl/worksheets/_rels/sheet${sidx}.xml.rels`);
+  if(rel){const x=new DOMParser().parseFromString(await rel.async('string'),'application/xml');
+    for(const r of x.getElementsByTagName('Relationship'))if((r.getAttribute('Type')||'').endsWith('/drawing'))dpath='xl/drawings/'+r.getAttribute('Target').split('/').pop()}
+  if(!dpath)dpath=Object.keys(zip.files).filter(n=>/^xl\/drawings\/drawing\d+\.xml$/.test(n)).sort()[0]||null;
+  if(!dpath||!zip.file(dpath))return false;
+  const dw=ws.properties.defaultColWidth||8.43,dh=ws.properties.defaultRowHeight||15;
+  const res=customersFromXml({
+    drawingXml:await zip.file(dpath).async('string'),
+    themeXml:zip.file('xl/theme/theme1.xml')?await zip.file('xl/theme/theme1.xml').async('string'):'',
+    colw:c=>pyRound((ws.getColumn(c).width||dw)*7+5)*9525,
+    rowh:r=>(ws.getRow(r).height||dh)*12700},
+    d.racks.flatMap(r=>r.cells));
+  if(!res.cust.length)return false;
+  let i=0;d.racks.forEach(r=>r.cells.forEach(c=>{c.push(res.idx[i++])}));
+  d.cust=res.cust;d.cnote=res.cnote;return true;
+}
+
 function loadScript(src){return new Promise((ok,no)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>no(new Error('Gagal memuat pembaca Excel. Periksa koneksi internet.'));document.head.appendChild(e)})}
 function parseSheet(G){
   /* G: {rowCount,columnCount,val(r,c),isNew(r,c)} */
@@ -561,12 +695,14 @@ async function loadFile(f){
     const wb=new ExcelJS.Workbook();
     await wb.xlsx.load(await f.arrayBuffer());
     const ws=wb.worksheets.find(w=>/exist/i.test(w.name))||wb.worksheets[0];
+    const buf=await f.arrayBuffer();
     const d=parseSheet(fromExcelJS(ws));
     if(!d.racks.length){say('Kode rak (A01, B01, C01, D01, ...) tidak ditemukan di sheet "'+ws.name+'". Pastikan layout sama dengan Rak_JDC.xlsx.',true);return}
-    DATA=d;prepRacks();prepGroups();prepCols();
-    Object.keys(done).forEach(k=>delete done[k]);
-    show(state.tab);
-    say('Sumber: '+f.name+' (sheet '+ws.name+'), '+d.racks.length+' rak terbaca.');
+    let cu=false;try{cu=await addCustomers(d,buf,wb,ws)}catch(e){cu=false}
+    DATA=d;state.cf=-1;prepRacks();prepGroups();prepCols();
+    state.col=CUST.length?'client':(state.col==='client'?'status':state.col);
+    refreshView();
+    say('Sumber: '+f.name+' (sheet '+ws.name+'), '+d.racks.length+' rak terbaca'+(cu?', '+CUST.length+' client terbaca dari kotak teks.':'. Nama client tidak ditemukan di file ini.'));
   }catch(e){say('Gagal membaca file: '+e.message,true)}
 }
 $('#f-btn').addEventListener('click',()=>$('#f-in').click());

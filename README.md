@@ -30,6 +30,13 @@ Streamlit Community Cloud: pilih repo ini, branch `main`, file utama `app.py`.
 |---|---|
 | `app.py` | Aplikasi Streamlit (unggah Excel, tampilkan peta) |
 | `baca_excel.py` | Membaca layout rak dari Excel (kode rak, level, warna abu-abu) |
+| `customers.py` | Membaca nama client dari kotak teks di Excel |
 | `tampak_samping.html` | Tampilan interaktif (SVG) yang disematkan ke Streamlit |
 
 Layout Excel harus sama dengan `Rak_JDC.xlsx`: kode rak A01-D09 di baris 11 dan 49, angka level di baris 15-88.
+
+## Client
+
+Nama client (Monde, Toshiba, Daelim, dan seterusnya) dibaca dari kotak teks berwarna di atas layout Excel. Tiap posisi rak diberi client berdasarkan kotak yang menutupinya. Pilih **Warna: Client** untuk mewarnai rak per client, lalu klik nama client untuk menyorotnya. Tab Rekap PP menampilkan PP existing per client.
+
+Batas client mengikuti posisi kotak teks di Excel, jadi sel di tepi kotak bisa bergeser satu kolom. Racking baru (abu-abu) belum punya client.
