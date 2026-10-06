@@ -378,13 +378,13 @@ function buildMesh(){
   const zOf=r=>(r-rmin)*CELL,inner=D/2-.05;
   const HU=Math.max(...racks.flatMap(r=>r.cells.map(c=>c[2])));
   function frame(cx,z,lv0,nw,guard){
-    const lv=HU,H=lv*P+.2,col=nw?GREY:(state.col==='level'?LVC(lv0):BLUE);
+    const lv=lv0,PP_=HU*P/lv0,H=HU*P+.2,col=nw?GREY:(state.col==='level'?LVC(lv0):BLUE);
     [-1,1].forEach(s=>{box(cx+s*inner,H/2,z,.09,H,.1,col);if(guard)box(cx+s*inner,.28,z,.22,.56,.2,YEL)});
     for(let i=0;i<lv;i++){
-      brace([cx+(i%2?1:-1)*inner,i*P+.1],[cx-(i%2?1:-1)*inner,(i+1)*P+.1],z,col);
-      if(i%2===0)box(cx,i*P+.1,z,2*inner,.05,.05,col);
+      brace([cx+(i%2?1:-1)*inner,i*PP_+.1],[cx-(i%2?1:-1)*inner,(i+1)*PP_+.1],z,col);
+      if(i%2===0)box(cx,i*PP_+.1,z,2*inner,.05,.05,col);
     }
-    box(cx,lv*P+.1,z,2*inner,.05,.05,col);
+    box(cx,HU*P+.1,z,2*inner,.05,.05,col);
   }
   allCols.forEach(c=>{
     const m=cellsByCol.get(c),rows=[...m.keys()].sort((a,b)=>a-b),groups=[];
@@ -404,7 +404,7 @@ function buildMesh(){
       if(!contP||same(pv))frame(cx,zs,g.lv,g.nw,!contP);else frame(cx,zs+.07,g.lv,g.nw,false);
       if(!contN)frame(cx,ze,g.lv,g.nw,true);else if(!same(nx))frame(cx,ze-.07,g.lv,g.nw,false);
       const z0=zOf(g.r0)-CELL/2,z1=zOf(g.r1)+CELL/2;
-      for(let l=2;l<=g.lv;l++)[-1,1].forEach(s=>box(cx+s*inner,(l-1)*P-.09,(z0+z1)/2,.07,.16,z1-z0-.06,beamCol(g)));
+      for(let l=2;l<=g.lv;l++)[-1,1].forEach(s=>box(cx+s*inner,(l-1)*HU*P/g.lv-.09,(z0+z1)/2,.07,.16,z1-z0-.06,beamCol(g)));
     });
   });
   const xs=[...xc.values()],x0=Math.min(...xs)-14,x1=Math.max(...xs)+14,z0=-14,z1=zOf(rmax)+CELL+60;
