@@ -166,9 +166,9 @@ body{margin:0}
       <div class="ctl"><label for="p-sl">Tinggi per level</label><input type="range" id="p-sl" min="1.4" max="2.2" step="0.1" value="1.7"><b id="p-val" style="font-family:var(--f-mono);font-weight:500">1,7 m</b></div>
       <div class="ctl"><label for="o-sel">Tampilkan</label><select id="o-sel"><option value="all">Existing + baru</option><option value="ex">Existing saja</option></select></div>
     </div>
-    <div class="legend"><span><i style="background:#1f5eb5"></i>Tiang existing</span><span><i style="background:#ee7819"></i>Balok existing (mode Client: warna client)</span><span><i style="background:#9ea8b3"></i>Racking baru (abu-abu)</span><span><i style="background:#f5c71a"></i>Pelindung tiang</span><span id="d3-info"></span></div>
+    <div class="legend" id="legend3"><span><i style="background:#1f5eb5"></i>Tiang existing</span><span><i style="background:#ee7819"></i>Balok existing (mode Client: warna client)</span><span><i style="background:#9ea8b3"></i>Racking baru (abu-abu)</span><span><i style="background:#f5c71a"></i>Pelindung tiang</span><span id="d3-info"></span></div>
     <div class="cv3"><canvas id="gl3"></canvas><canvas id="ov3"></canvas><div id="gl-msg" class="note" hidden style="padding:16px">Browser ini tidak mendukung WebGL2, jadi tampilan 3D tidak bisa dibuka. Gunakan Chrome, Edge, Firefox, atau Safari terbaru.</div></div>
-    <div class="note">Putar: seret. Geser: seret sambil menahan Shift atau klik kanan. Perbesar: roda mouse atau dua jari. Papan kode rak muncul saat didekati. Ukuran adalah perkiraan: 1 posisi pallet 1,1 m, kedalaman rak 1,1 m, lorong 3 m. Isi rak tidak digambar. Tinggi tiap bay mengikuti jumlah level di Excel; lantai dasar dihitung sebagai level 1.</div>
+    <div class="note">Putar: seret. Geser: seret sambil menahan Shift atau klik kanan. Perbesar: roda mouse atau dua jari. Papan kode rak muncul saat didekati. Ukuran adalah perkiraan: 1 posisi pallet 1,1 m, kedalaman rak 1,1 m, lorong 3 m. Isi rak tidak digambar. Tinggi tiap bay mengikuti jumlah level di Excel; lantai dasar dihitung sebagai level 1. Pilih Warna: Jumlah level untuk membedakan rak 3, 5, 6, 7 dan 9 level. Papan kode rak menampilkan jumlah level.</div>
   </section>
 
   <section class="panel" id="p-recap" hidden>
@@ -341,6 +341,7 @@ const mLook=(e,c,u)=>{const z=vNorm(vSub(e,c)),x=vNorm(vCross(u,z)),y=vCross(z,x
 const mMul=(a,b)=>{const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s}return o};
 const G3={gl:null,cam:{yaw:-.55,pitch:.6,dist:200,t:[0,0,0]},mesh:null,fov:1.05,raf:0};
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const LV3={3:'#ffc857',4:'#f9a03f',5:'#ef6f3d',6:'#5aa9e6',7:'#2f6fbf',8:'#4b4fbf',9:'#7b2fa8'};
 
 function buildMesh(){
   const {cell:CELL,depth:D,gap:GAP,aisle:AIS}=V3,K=+state.k,P=+state.pitch,only=state.only==='ex';
@@ -365,8 +366,10 @@ function buildMesh(){
   }
   const BLUE=[.12,.37,.71],ORANGE=[.93,.47,.10],GREY=[.62,.66,.70],GREYB=[.42,.46,.50],YEL=[.96,.78,.10],NONEC=[.60,.64,.68],DIMC=[.80,.82,.84];
   const hexRGB=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
+  const LVC=lv=>hexRGB(LV3[Math.min(9,Math.max(3,lv))]);
   const beamCol=g=>{
     if(state.col==='client'){if(g.nw)return GREYB;if(dimmed(g.cl,g.nw))return DIMC;return g.cl>=0&&CUST[g.cl]?hexRGB(CUST[g.cl].color):NONEC}
+    if(state.col==='level')return g.nw?GREYB:LVC(g.lv);
     return g.nw?GREYB:ORANGE};
   const xc=new Map();let x=0;
   allCols.forEach((c,i)=>{if(i>0)x+=(c-allCols[i-1]===1)?D+GAP:D+AIS;xc.set(c,x)});
@@ -374,7 +377,7 @@ function buildMesh(){
   allCols.forEach(c=>cellsByCol.get(c).forEach((_,r)=>{rmin=Math.min(rmin,r);rmax=Math.max(rmax,r)}));
   const zOf=r=>(r-rmin)*CELL,inner=D/2-.05;
   function frame(cx,z,lv,nw,guard){
-    const H=lv*P+.2,col=nw?GREY:BLUE;
+    const H=lv*P+.2,col=nw?GREY:(state.col==='level'?LVC(lv):BLUE);
     [-1,1].forEach(s=>{box(cx+s*inner,H/2,z,.09,H,.1,col);if(guard)box(cx+s*inner,.28,z,.22,.56,.2,YEL)});
     for(let i=0;i<lv;i++){
       brace([cx+(i%2?1:-1)*inner,i*P+.1],[cx-(i%2?1:-1)*inner,(i+1)*P+.1],z,col);
@@ -392,9 +395,13 @@ function buildMesh(){
     });
     const cx=xc.get(c);
     groups.forEach((g,i)=>{
-      const pv=groups[i-1],cont=pv&&pv.r1+1===g.r0,nx=groups[i+1];
-      frame(cx,zOf(g.r0)-CELL/2,cont?Math.max(pv.lv,g.lv):g.lv,cont?(pv.nw&&g.nw):g.nw,!cont);
-      if(!nx||nx.r0!==g.r1+1)frame(cx,zOf(g.r1)+CELL/2,g.lv,g.nw,true);
+      const pv=groups[i-1],nx=groups[i+1];
+      const contP=pv&&pv.r1+1===g.r0,contN=nx&&nx.r0===g.r1+1;
+      const same=o=>o.lv===g.lv&&o.nw===g.nw;
+      const zs=zOf(g.r0)-CELL/2,ze=zOf(g.r1)+CELL/2;
+      /* tiap bay memakai tinggi levelnya sendiri; bila tetangga beda tinggi, dua rangka dipasang berdampingan */
+      if(!contP||same(pv))frame(cx,zs,g.lv,g.nw,!contP);else frame(cx,zs+.07,g.lv,g.nw,false);
+      if(!contN)frame(cx,ze,g.lv,g.nw,true);else if(!same(nx))frame(cx,ze-.07,g.lv,g.nw,false);
       const z0=zOf(g.r0)-CELL/2,z1=zOf(g.r1)+CELL/2;
       for(let l=2;l<=g.lv;l++)[-1,1].forEach(s=>box(cx+s*inner,(l-1)*P-.09,(z0+z1)/2,.07,.16,z1-z0-.06,beamCol(g)));
     });
@@ -407,7 +414,8 @@ function buildMesh(){
   racks.forEach(r=>{
     const cs=[...new Set(r.cells.filter(c=>!(only&&c[3])).map(c=>c[1]))];if(!cs.length)return;
     const mr=Math.max(...r.cells.filter(c=>!(only&&c[3])).map(c=>c[0]));
-    labels.push({code:r.code,x:cs.reduce((a,c)=>a+xc.get(c),0)/cs.length,z:zOf(mr)+CELL/2+.15,nw:r.cells.every(c=>c[3]),cols:cs.map(c=>xc.get(c))});
+    const lvs=r.cells.filter(c=>!(only&&c[3])).map(c=>c[2]),lo=Math.min(...lvs),hi=Math.max(...lvs);
+    labels.push({code:r.code,lvt:lo===hi?`${lo} level`:`${lo}–${hi} level`,x:cs.reduce((a,c)=>a+xc.get(c),0)/cs.length,z:zOf(mr)+CELL/2+.15,nw:r.cells.every(c=>c[3]),cols:cs.map(c=>xc.get(c))});
   });
   return {V:V.subarray(0,nv*9),I:I.subarray(0,ni),ni,xc,labels,b:{x0:Math.min(...xs),x1:Math.max(...xs),z1:zOf(rmax)+CELL/2}};
 }
@@ -444,11 +452,12 @@ function paint(){
     const p=[l.x,3.4,l.z],w=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];if(w<=0)return;
     const sx=((VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12])/w*.5+.5)*W,sy=(1-((VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13])/w*.5+.5))*H;
     const s=1.5*foc/w;if(s<26||s>420||sx<-s||sx>W+s||sy<-s||sy>H+s)return;
-    const bw=s,bh=s*.62;
+    const bw=s,bh=s*.8;
     cx.fillStyle='#f4f1ea';cx.strokeStyle=l.nw?'#6b747c':'#7a6a55';cx.lineWidth=Math.max(1,s*.03);
     cx.beginPath();cx.rect(sx-bw/2,sy-bh/2,bw,bh);cx.fill();cx.stroke();
     cx.fillStyle=l.nw?'#4d5660':'#1d4fa8';cx.font=`700 ${Math.round(s*.4)}px "Barlow Condensed",Arial Narrow,sans-serif`;
-    cx.textAlign='center';cx.textBaseline='middle';cx.fillText(l.code,sx,sy+s*.02);
+    cx.textAlign='center';cx.textBaseline='middle';cx.fillText(l.code,sx,sy-s*.12);
+    cx.font=`600 ${Math.round(s*.2)}px "IBM Plex Sans",Arial,sans-serif`;cx.fillStyle='#3a4148';cx.fillText(l.lvt,sx,sy+s*.26);
   });
 }
 function redraw(){if(G3.raf)return;G3.raf=requestAnimationFrame(()=>{G3.raf=0;paint()})}
@@ -488,6 +497,14 @@ vec3 c=base*d;float f=clamp((length(vW-uEye)-90.)/520.,0.,.8);o=vec4(mix(c,uFog,
   return true;
 }
 let g3timer=0;
+function legend3(){
+  const el=$('#legend3'),info=$('#d3-info')?$('#d3-info').textContent:'';
+  if(state.col==='level'){
+    const lv=[...new Set(racks.flatMap(r=>r.cells.filter(c=>!c[3]).map(c=>c[2])))].sort((a,b)=>a-b);
+    el.innerHTML=lv.map(l=>`<span><i style="background:${LV3[Math.min(9,Math.max(3,l))]}"></i>${l} level</span>`).join('')+'<span><i style="background:#9ea8b3"></i>Racking baru</span><span id="d3-info"></span>';
+  }else el.innerHTML='<span><i style="background:#1f5eb5"></i>Tiang existing</span><span><i style="background:#ee7819"></i>Balok existing (mode Client: warna client)</span><span><i style="background:#9ea8b3"></i>Racking baru (abu-abu)</span><span><i style="background:#f5c71a"></i>Pelindung tiang</span><span id="d3-info"></span>';
+  $('#d3-info').textContent=info;
+}
 function rebuild3D(keepCam){
   if(!G3.gl)return;
   const g=G3.gl,m=buildMesh();G3.mesh=m;G3.ni=m.ni;
@@ -498,6 +515,7 @@ function rebuild3D(keepCam){
   const sel=$('#f-rak');sel.innerHTML='<option value="">Masuk ke lorong...</option>'+m.labels.slice().sort((a,b)=>a.code.localeCompare(b.code)).map(l=>`<option value="${l.code}">${l.code}</option>`).join('');
   if(!keepCam)preset('ov');
   paint();
+  legend3();
   $('#d3-info').textContent=`${fmt(Math.round(m.ni/36))} bagian rak digambar`;
 }
 function render3D(){
