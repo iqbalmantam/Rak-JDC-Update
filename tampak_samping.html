@@ -111,6 +111,7 @@ body{margin:0}
 
   <div class="tabs" role="tablist" id="tabs">
     <button class="tab" role="tab" data-t="side" aria-selected="true">Tampak samping</button>
+    <button class="tab" role="tab" data-t="top" aria-selected="false">Tampak atas</button>
     <button class="tab" role="tab" data-t="cross" aria-selected="false">Potongan melintang</button>
     <button class="tab" role="tab" data-t="d3" aria-selected="false">3D rak</button>
     <button class="tab" role="tab" data-t="recap" aria-selected="false">Rekap PP</button>
@@ -135,6 +136,16 @@ body{margin:0}
     <div class="legend" id="legend1"></div>
     <div class="scroll"><div id="side-out"></div></div>
     <div class="callout" id="side-note"></div>
+  </section>
+
+  <section class="panel" id="p-top" hidden>
+    <div class="controls">
+      <div class="ctl"><label for="t-sl">Ukuran kotak</label><input type="range" id="t-sl" min="8" max="26" step="1" value="14"><b id="t-val" style="font-family:var(--f-mono);font-weight:500">14 px</b></div>
+      <div class="ctl"><label class="lbl"><input type="checkbox" id="t-lbl" checked> Kode rak</label></div>
+    </div>
+    <div class="legend" id="legend0"></div>
+    <div class="scroll"><div id="top-out"></div></div>
+    <div class="note">Tampak dari atas: tiap kotak = satu posisi pallet (kolom Excel ke kanan, baris Excel ke bawah). Arahkan kursor ke kotak untuk melihat kode rak, jumlah level, dan client. Warna mengikuti pilihan Warna di atas.</div>
   </section>
 
   <section class="panel" id="p-cross" hidden>
@@ -251,6 +262,34 @@ function legend(el,mode){
     ?lv.map(l=>`<span><i style="background:var(--l${l})"></i>${l} level</span>`).join('')
     :`<span><i style="background:var(--exist)"></i>Existing</span><span><i class="nw"></i>Racking baru (abu-abu di Excel)</span>`)
     +(mode==='level'?`<span><i class="nw" style="background:none"></i>Garis putus-putus = racking baru</span>`:'');
+}
+
+/* ---------- Tampak atas ---------- */
+function renderTop(){
+  const sz=state.ts||14,padL=34,padT=40;
+  let r0=1e9,r1=0;
+  allCols.forEach(c=>cellsByCol.get(c).forEach((_,r)=>{r0=Math.min(r0,r);r1=Math.max(r1,r)}));
+  const c0=allCols[0],c1=allCols[allCols.length-1];
+  const W=padL+(c1-c0+1)*sz+8,H=padT+(r1-r0+1)*sz+8;
+  const X=c=>padL+(c-c0)*sz,Y=r=>padT+(r-r0)*sz;
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tampak atas gudang">`;
+  for(let c=c0;c<=c1;c++)if(sz>=11||c%2===0)s+=`<text x="${X(c)+sz/2}" y="10" font-size="${Math.min(9,sz-3)}" text-anchor="middle" fill="var(--muted)">${colName(c)}</text>`;
+  for(let r=r0;r<=r1;r++)if(r%5===0)s+=`<text x="${padL-5}" y="${Y(r)+sz/2+3}" font-size="9" text-anchor="end" fill="var(--muted)">${r}</text>`;
+  const ctr=new Map();
+  allCols.forEach(c=>cellsByCol.get(c).forEach((b,r)=>{
+    s+=`<rect x="${X(c)+.5}" y="${Y(r)+.5}" width="${sz-1}" height="${sz-1}" rx="1.5" fill="${colourFor(b.lv,b.nw,state.col,b.cl)}"${b.nw?' class="nw"':''}${dimmed(b.cl,b.nw)?' opacity=".15"':''}><title>${b.code} · kolom ${colName(c)} · posisi ${r} · ${b.lv} level${b.nw?' · racking baru':''}${custName(b.cl)?' · '+custName(b.cl):''}</title></rect>`;
+    const e=ctr.get(b.code)||{x0:1e9,x1:0,y0:1e9,y1:0};
+    e.x0=Math.min(e.x0,c);e.x1=Math.max(e.x1,c);e.y0=Math.min(e.y0,r);e.y1=Math.max(e.y1,r);ctr.set(b.code,e);
+  }));
+  if($('#t-lbl').checked&&sz>=10)ctr.forEach((e,code)=>{
+    const x=X((e.x0+e.x1)/2)+sz/2,y=Y(e.y0)-3,narrow=(e.x1-e.x0+1)*sz<26;
+    s+=narrow
+      ?`<text transform="translate(${x+3},${y}) rotate(-90)" font-size="9" font-weight="600" fill="var(--ink)">${code}</text>`
+      :`<text x="${x}" y="${y}" font-size="9" font-weight="600" text-anchor="middle" fill="var(--ink)">${code}</text>`;
+  });
+  s+='</svg>';
+  $('#top-out').innerHTML=s;
+  legend($('#legend0'),state.col);
 }
 
 /* ---------- Tab 1: tampak samping ---------- */
@@ -557,18 +596,20 @@ $('#f-rak').addEventListener('change',e=>{if(e.target.value)focusRack(e.target.v
 $('#k-sl').addEventListener('input',e=>{state.k=+e.target.value;$('#k-val').textContent=e.target.value;debounce3D()});
 $('#p-sl').addEventListener('input',e=>{state.pitch=+e.target.value;$('#p-val').textContent=e.target.value.replace('.',',')+' m';debounce3D()});
 $('#o-sel').addEventListener('change',e=>{state.only=e.target.value;rebuild3D(true)});
+$('#t-sl').addEventListener('input',e=>{state.ts=+e.target.value;$('#t-val').textContent=e.target.value+' px';renderTop()});
+$('#t-lbl').addEventListener('change',renderTop);
 const done={};
 function show(t){
   state.tab=t;$('#colbar').hidden=(t==='recap');
   document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
-  ['side','cross','d3','recap'].forEach(k=>$('#p-'+k).hidden=k!==t);
-  if(!done[t]){done[t]=1;({side:renderSide,cross:renderCross,d3:render3D,recap:renderRecap})[t]()}
+  ['side','top','cross','d3','recap'].forEach(k=>$('#p-'+k).hidden=k!==t);
+  if(!done[t]){done[t]=1;({side:renderSide,top:renderTop,cross:renderCross,d3:render3D,recap:renderRecap})[t]()}
 }
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)show(b.dataset.t)});
 prepRacks();prepGroups();prepCols();
 if(CUST.length)state.col='client';renderBar();
 const h=location.hash.slice(1);
-show(['side','cross','d3','recap'].includes(h)?h:'side');
+show(['side','top','cross','d3','recap'].includes(h)?h:'side');
 
 /* ---------- unggah Excel (ExcelJS dimuat saat dibutuhkan, agar warna sel terbaca) ---------- */
 /* ----- nama customer dari kotak teks Excel (port dari customers.py) ----- */
