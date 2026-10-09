@@ -140,12 +140,13 @@ body{margin:0}
 
   <section class="panel" id="p-top" hidden>
     <div class="controls">
-      <div class="ctl"><label for="t-sl">Ukuran kotak</label><input type="range" id="t-sl" min="8" max="26" step="1" value="14"><b id="t-val" style="font-family:var(--f-mono);font-weight:500">14 px</b></div>
+      <div class="ctl"><label for="t-sl">Ukuran kotak</label><input type="range" id="t-sl" min="8" max="26" step="1" value="18"><b id="t-val" style="font-family:var(--f-mono);font-weight:500">18 px</b></div>
       <div class="ctl"><label class="lbl"><input type="checkbox" id="t-lbl" checked> Kode rak</label></div>
+      <div class="ctl"><label class="lbl"><input type="checkbox" id="t-lv" checked> Angka level</label></div>
     </div>
     <div class="legend" id="legend0"></div>
     <div class="scroll"><div id="top-out"></div></div>
-    <div class="note">Tampak dari atas: tiap kotak = satu posisi pallet (kolom Excel ke kanan, baris Excel ke bawah). Arahkan kursor ke kotak untuk melihat kode rak, jumlah level, dan client. Warna mengikuti pilihan Warna di atas.</div>
+    <div class="note">Tampak dari atas: tiap kotak = satu posisi pallet (kolom Excel ke kanan, baris Excel ke bawah). Angka di dalam kotak = jumlah level (tampil bila ukuran kotak ≥ 11 px). Arahkan kursor ke kotak untuk melihat kode rak, jumlah level, dan client. Warna mengikuti pilihan Warna di atas.</div>
   </section>
 
   <section class="panel" id="p-cross" hidden>
@@ -266,7 +267,7 @@ function legend(el,mode){
 
 /* ---------- Tampak atas ---------- */
 function renderTop(){
-  const sz=state.ts||14,padL=34,padT=40;
+  const sz=state.ts||18,padL=34,padT=40;
   let r0=1e9,r1=0;
   allCols.forEach(c=>cellsByCol.get(c).forEach((_,r)=>{r0=Math.min(r0,r);r1=Math.max(r1,r)}));
   const c0=allCols[0],c1=allCols[allCols.length-1];
@@ -275,9 +276,10 @@ function renderTop(){
   let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tampak atas gudang">`;
   for(let c=c0;c<=c1;c++)if(sz>=11||c%2===0)s+=`<text x="${X(c)+sz/2}" y="10" font-size="${Math.min(9,sz-3)}" text-anchor="middle" fill="var(--muted)">${colName(c)}</text>`;
   for(let r=r0;r<=r1;r++)if(r%5===0)s+=`<text x="${padL-5}" y="${Y(r)+sz/2+3}" font-size="9" text-anchor="end" fill="var(--muted)">${r}</text>`;
-  const ctr=new Map();
+  const ctr=new Map(),showLv=$('#t-lv').checked&&sz>=11;
   allCols.forEach(c=>cellsByCol.get(c).forEach((b,r)=>{
     s+=`<rect x="${X(c)+.5}" y="${Y(r)+.5}" width="${sz-1}" height="${sz-1}" rx="1.5" fill="${colourFor(b.lv,b.nw,state.col,b.cl)}"${b.nw?' class="nw"':''}${dimmed(b.cl,b.nw)?' opacity=".15"':''}><title>${b.code} · kolom ${colName(c)} · posisi ${r} · ${b.lv} level${b.nw?' · racking baru':''}${custName(b.cl)?' · '+custName(b.cl):''}</title></rect>`;
+    if(showLv)s+=`<text x="${X(c)+sz/2}" y="${Y(r)+sz/2+sz*.17}" font-size="${Math.round(sz*.55)}" font-weight="600" text-anchor="middle" fill="#111" style="paint-order:stroke;stroke:rgba(255,255,255,.55);stroke-width:2px;pointer-events:none"${dimmed(b.cl,b.nw)?' opacity=".2"':''}>${b.lv}</text>`;
     const e=ctr.get(b.code)||{x0:1e9,x1:0,y0:1e9,y1:0};
     e.x0=Math.min(e.x0,c);e.x1=Math.max(e.x1,c);e.y0=Math.min(e.y0,r);e.y1=Math.max(e.y1,r);ctr.set(b.code,e);
   }));
@@ -598,6 +600,7 @@ $('#p-sl').addEventListener('input',e=>{state.pitch=+e.target.value;$('#p-val').
 $('#o-sel').addEventListener('change',e=>{state.only=e.target.value;rebuild3D(true)});
 $('#t-sl').addEventListener('input',e=>{state.ts=+e.target.value;$('#t-val').textContent=e.target.value+' px';renderTop()});
 $('#t-lbl').addEventListener('change',renderTop);
+$('#t-lv').addEventListener('change',renderTop);
 const done={};
 function show(t){
   state.tab=t;$('#colbar').hidden=(t==='recap');
