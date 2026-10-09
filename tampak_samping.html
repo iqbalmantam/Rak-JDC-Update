@@ -153,7 +153,7 @@ body{margin:0}
     </div>
     <div class="legend" id="legend2"></div>
     <div class="scroll"><div id="cross-out"></div></div>
-    <div class="note">Dari sini terlihat profil tinggi gudang antar rak: perbedaan 6, 7 dan 9 level, lorong antar rak, dan area rendah di lorong silang.</div>
+    <div class="note">Semua rak digambar sama tinggi; jumlah tingkat per rak dibagi rata (lihat jumlah level di tooltip, atau pilih Warna: Jumlah level).</div>
   </section>
 
   <section class="panel" id="p-d3" hidden>
@@ -311,13 +311,14 @@ function renderCross(){
     let best=null;m.forEach(b=>{if(!best||b.lv>best.lv)best=b});return best;
   };
   let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Potongan melintang gudang">`;
-  for(let k=1;k<=mx;k++) s+=`<line x1="${padL}" x2="${W-4}" y1="${mx*lh-(k-1)*lh}" y2="${mx*lh-(k-1)*lh}" stroke="var(--line)" stroke-width=".5"/><text x="${padL-6}" y="${mx*lh-(k-1)*lh-lh/2+3}" font-size="9" text-anchor="end">L${k}</text>`;
+  s+=`<line x1="${padL}" x2="${W-4}" y1="0.5" y2="0.5" stroke="var(--line)" stroke-width=".5" stroke-dasharray="3 3"/>`;
   s+=`<line x1="${padL}" x2="${W-4}" y1="${mx*lh}" y2="${mx*lh}" stroke="var(--ink)" stroke-width="1.2"/>`;
   const labelled=new Map();
   allCols.forEach(c=>{
     const b=pick(c);if(!b)return;
     let rr='';
-    for(let k=1;k<=b.lv;k++) rr+=`<rect x="${X(c)+.6}" y="${mx*lh-k*lh+.8}" width="${cw-1.2}" height="${lh-1.6}" rx="1" fill="${colourFor(b.lv,b.nw,state.col,b.cl)}"${b.nw?' class="nw"':''}${dimmed(b.cl,b.nw)?' opacity=".15"':''}/>`;
+    const th=mx*lh/b.lv;
+    for(let k=1;k<=b.lv;k++) rr+=`<rect x="${X(c)+.6}" y="${mx*lh-k*th+.8}" width="${cw-1.2}" height="${th-1.6}" rx="1" fill="${colourFor(b.lv,b.nw,state.col,b.cl)}"${b.nw?' class="nw"':''}${dimmed(b.cl,b.nw)?' opacity=".15"':''}/>`;
     s+=`<g><title>${b.code} · kolom ${colName(c)} · posisi ${b.row} · ${b.lv} level${b.nw?' · racking baru':''}${custName(b.cl)?' · '+custName(b.cl):''}</title>${rr}</g>`;
     const key=b.code;const e=labelled.get(key)||{min:1e9,max:0};e.min=Math.min(e.min,X(c));e.max=Math.max(e.max,X(c)+cw);labelled.set(key,e);
   });
